@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://script.google.com https://script.googleusercontent.com; img-src data:">
+<title>Anecdotal assistant</title>
+<style>
+:root{--bg:#EDF2F4;--card:#fff;--ink:#14212B;--mute:#5A6A75;--line:#D3DCE1;--acc:#0E7C86;--accbg:#DCF0F1;--t:#2F5BD3;--tbg:#E3EAFB;--s:#A45F00;--sbg:#FBEBCF;--rec:#C93434}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Avenir Next","Segoe UI",system-ui,sans-serif}
+header{background:var(--ink);color:#fff;display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 20px}
+.brand{font-weight:700;font-size:18px;margin-right:auto}
+header input{background:#22333F;border:1px solid #3A4E5C;color:#fff;border-radius:10px;padding:8px 12px;width:170px;font:inherit}
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
+.btn:disabled{opacity:.45;cursor:not-allowed}.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.rec{background:var(--rec);border-color:var(--rec);color:#fff;animation:p 1.6s infinite}
+@keyframes p{50%{opacity:.78}}@media(prefers-reduced-motion:reduce){.btn.rec{animation:none}}
+.btn.sm{padding:3px 9px;font-size:13px;font-weight:500}
+:focus-visible{outline:3px solid #7CC4CB;outline-offset:2px}
+nav{display:flex;gap:4px;padding:10px 20px 0;overflow-x:auto}
+nav button{border:0;background:none;padding:10px 16px;font:inherit;font-weight:600;color:var(--mute);cursor:pointer;border-bottom:3px solid transparent}
+nav button.on{color:var(--ink);border-color:var(--acc)}
+main{padding:16px 20px 60px;max-width:1150px;margin:0 auto}
+.grid{display:grid;grid-template-columns:3fr 2fr;gap:16px}.grid2{display:grid;grid-template-columns:230px 1fr;gap:16px}
+@media(max-width:800px){.grid,.grid2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+h2{font-size:17px;margin:0 0 10px}h3{font-size:15px;margin:14px 0 6px}
+.empty{color:var(--mute);text-align:center;padding:36px 16px}
+.tx{min-height:300px;max-height:56vh;overflow:auto;margin-bottom:12px}
+.ln{display:flex;gap:8px;align-items:flex-start;padding:8px 6px;border-bottom:1px solid var(--line)}
+.ln .tx-t{flex:1}.int{color:var(--mute);font-style:italic;padding:8px 6px}
+.b{flex:none;font-size:12px;font-weight:700;border-radius:6px;padding:2px 7px;margin-top:2px}
+.b.T{background:var(--tbg);color:var(--t)}.b.S{background:var(--sbg);color:var(--s)}
+.who{font-size:12px;color:var(--mute)}
+.row{display:flex;gap:8px}.row input,.row select{flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font:inherit;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font:inherit;cursor:pointer}
+.chip.on{background:var(--accbg);border-color:var(--acc);font-weight:700}
+.box{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.box h3{margin:0 0 6px}
+.list{padding:8px}.it{display:flex;justify-content:space-between;width:100%;border:0;background:none;padding:9px 12px;border-radius:10px;font:inherit;cursor:pointer;text-align:left}
+.it.on{background:var(--accbg);font-weight:700}.it small{color:var(--mute)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}.seg button{border:0;background:#fff;padding:6px 12px;font:inherit;cursor:pointer}.seg button.on{background:var(--ink);color:#fff}
+.marks{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:8px 0}
+.mk{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute)}
+.dots{display:flex;gap:5px}.dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);background:#fff;cursor:pointer;padding:0}
+.dot.on{background:var(--acc);border-color:var(--acc)}.dot.sug{border:2px dashed var(--acc)}
+.ent{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--line)}.ent .tx-t{flex:1}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.cols .card{border-top:5px solid var(--acc)}.cols .card.n{border-top-color:var(--s)}
+.item{display:flex;gap:8px;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)}
+.tag{font-size:12px;color:var(--mute)}
+#tag{position:fixed;display:none;gap:6px;background:var(--ink);padding:6px;border-radius:12px;z-index:9}
+#tag button{border:0;border-radius:8px;padding:7px 12px;font:inherit;font-weight:600;cursor:pointer}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:12px;display:none;z-index:9}
+textarea{width:100%;min-height:200px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
+svg text{font-size:13px;fill:var(--ink)}.note{color:var(--mute);font-size:14px}
+.convo{display:flex;gap:12px;align-items:stretch;margin-bottom:12px}.convo .tx{flex:1;margin-bottom:0;min-width:0}
+.mic{width:78px;flex:none;writing-mode:vertical-rl;font-size:19px;letter-spacing:.05em;border-radius:14px;min-height:300px}
+.mic.on{background:var(--ink);border-color:var(--ink);color:#fff}
+@media(max-width:800px){.convo{flex-direction:column-reverse}.mic{writing-mode:horizontal-tb;width:100%;min-height:0;padding:14px}}
+.ai{background:var(--accbg);border-radius:12px;padding:4px 14px 12px;margin:8px 0}.ai ul{margin:4px 0;padding-left:20px}.ai .item{border-color:#B9DDE0}
+header select{background:#22333F;border:1px solid #3A4E5C;color:#fff;border-radius:10px;padding:8px 10px;font:inherit;max-width:200px}header select option{color:#14212B;background:#fff}
+#tag{flex-wrap:wrap;max-width:360px}.chipx{border:1px solid var(--line);background:#fff;border-radius:999px;padding:1px 9px;font:inherit;font-size:12px;cursor:pointer;margin:0 4px 2px 0}.chipx:hover,.chipx.on{background:#FBE3E3;border-color:var(--rec)}.rmq{display:inline-block;margin-left:4px;color:var(--ink)}
+.sg{padding:6px 8px;border-radius:8px;margin-bottom:4px}.sg.hl{background:#FFF3C4;outline:2px solid #E7C84A}.fb{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;margin:0 0 6px;font:inherit;cursor:pointer}.fb:hover{border-color:var(--acc);background:var(--accbg)}
+.tb{border:2px solid var(--line);background:#fff;border-radius:10px;padding:8px 16px;font:inherit;font-weight:600;cursor:pointer;min-height:44px}.tb.on{border-color:var(--ink)}
+.ck{margin-top:6px;width:18px;height:18px;flex:none}.bulkp{background:var(--accbg);border-radius:12px;padding:10px 12px;margin:8px 0 12px}#bulk{margin-bottom:6px}
+.icon{border:0;background:none;color:var(--mute);cursor:pointer;padding:6px;border-radius:8px;flex:none;display:inline-flex;align-self:flex-start}.icon:hover{background:#FBE3E3;color:var(--rec)}
+@media print{header,nav,.noprint{display:none!important}body{background:#fff}}
+.gridwrap{overflow-x:auto}.tg{border-collapse:collapse;width:100%;min-width:420px}.tg th,.tg td{border:1px solid var(--line);padding:4px;text-align:center}.tg th{background:#F4F7F8;font-size:13px}.tg td.cr{text-align:left;padding:6px 8px;min-width:130px}
+.cell{width:100%;min-width:52px;height:44px;border:2px solid var(--line);background:#fff;border-radius:8px;font:inherit;font-weight:700;font-size:18px;cursor:pointer}.cell:disabled{background:#F1F3F4;cursor:not-allowed;opacity:.5}
+.cellnote{width:100%;min-width:70px;border:1px solid var(--line);border-radius:6px;padding:4px;font:inherit;font-size:13px}
+.tkey{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.tkey span{border-radius:999px;padding:2px 10px;font-size:13px;border:1px solid var(--line)}
+#printArea{display:none}.pblock{margin-bottom:26px;break-inside:avoid}.pt th,.pt td{border:1px solid #333!important;height:34px;color:#000}.pt{min-width:0}
+@media print{body.pr>*:not(#printArea){display:none!important}body.pr #printArea{display:block}body.pr{background:#fff}}
+</style></head><body>
+<header><div class="brand">Anecdotal assistant</div>
+<div id="ctx" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+<span id="sync" style="color:#9FB3C0;font-size:13px"></span><button id="cap" class="btn"></button></header>
+<nav id="nav"></nav><main id="main"></main>
+<div id="tag"></div>
+<div id="toast"></div>
+<div id="printArea"></div>
+<script>
+const KEY='anecdotal-v1',$=s=>document.querySelector(s);
+const fresh=()=>({roster:[],lines:[],marks:{},items:{},ai:{},tomb:{},trackers:[],tracks:{},joinSec:8,tidy:true,spokenPunct:false,lang:'en-CA',fixes:'',grade:'',lmode:'dots',lessons:[],idYear:null,idLast:0,codes:{},n:0,sync:{url:'',key:''},aiOn:true,subject:'Language',strand:'',term:'',mode:'dots',hide:false});
+let syncT,syncing=false;
+let S;try{S=Object.assign(fresh(),JSON.parse(localStorage.getItem(KEY)))}catch(e){S=fresh()}
+const persist=()=>{try{stamp();localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Could not save on this device.')}};
+const save=()=>{persist();queueSync()};
+/* change tracking: every record gets an update time (u) when it changes, and a tombstone when it is deleted, so devices can merge */
+const hsh=t=>{let x=5381;for(let i=0;i<t.length;i++)x=((x<<5)+x+t.charCodeAt(i))|0;return x.toString(36)};
+const recHash=r=>hsh(JSON.stringify(r,(k,v)=>k==='u'?undefined:v));
+function eachRec(fn){S.roster.forEach(r=>fn('st:'+r.id,r));S.lines.forEach(r=>fn('ln:'+r.id,r));S.lessons.forEach(r=>fn('ls:'+r.id,r));
+ for(const sid in S.items)S.items[sid].forEach(r=>fn('it:'+r.id,r));for(const k in S.marks)if(S.marks[k])fn('mk:'+k,S.marks[k]);for(const k in S.ai)if(S.ai[k]&&typeof S.ai[k]==='object')fn('ai:'+k,S.ai[k]);S.trackers.forEach(r=>fn('tr:'+r.id,r));for(const k in S.tracks)fn('te:'+k,S.tracks[k])}
+function stamp(){const now=Date.now();S.tomb=S.tomb||{};
+ if(!S.h){S.h={};eachRec((t,r)=>{S.h[t]=recHash(r)});return}
+ const seen={};eachRec((t,r)=>{seen[t]=1;const x=recHash(r);if(S.h[t]!==x){S.h[t]=x;r.u=now}if(S.tomb[t])delete S.tomb[t]});
+ for(const t in S.h)if(!seen[t]){S.tomb[t]=now;delete S.h[t]}}
+function h(t,p,...k){const e=document.createElement(t);for(const[a,v]of Object.entries(p||{})){if(v==null||v===false)continue;if(a==='class')e.className=v;else if(a.startsWith('on'))e.addEventListener(a.slice(2),v);else if(a==='dataset')Object.assign(e.dataset,v);else e.setAttribute(a,v)}for(const c of k.flat())if(c!=null&&c!==false)e.append(c.nodeType?c:document.createTextNode(c));return e}
+const sv=(t,p,...k)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',t);for(const[a,v]of Object.entries(p||{}))e.setAttribute(a,v);k.forEach(c=>e.append(c));return e};
+const uid=()=>Math.random().toString(36).slice(2,9),day=()=>new Date().toLocaleDateString('en-CA');
+const fd=d=>new Date(d+'T12:00').toLocaleDateString(undefined,{month:'short',day:'numeric'});
+const nm=s=>!s?'(removed)':S.hide?s.name.split(/\s+/).map(w=>w[0]).join('.')+'.':s.name;
+const stu=id=>S.roster.find(r=>r.id===id);
+const empty=t=>h('div',{class:'card empty'},t);
+const osel=(lab,opts,val,fn)=>h('select',{'aria-label':lab,title:lab,onchange:e=>fn(e.target.value)},opts.map(o=>h('option',{value:o[0],selected:o[0]===val?'':null},o[1])));
+const short=(t,n=14)=>{const w=t.split(/\s+/);return w.slice(0,n).join(' ')+(w.length>n?'…':'')};
+function toast(t,undo){const e=$('#toast');e.replaceChildren(t);if(undo)e.append(' ',h('button',{class:'btn sm',onclick:()=>{undo();e.style.display='none'}},'Undo'));e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',undo?7000:2600)}
+const CATS=[['participation','Participation'],['knowledge','Knowledge'],['application','Application'],['thinking','Thinking'],['communication','Communication']];
+const KW={knowledge:/\b(know|knows|because|means|learned|fact|remember|correct|right)\b/i,application:/\b(use|used|apply|applied|example|try|tried|add|added|revise|edit|edited)\b/i,thinking:/\b(why|think|thought|predict|compare|maybe|idea|reason|wonder|what if)\b/i,communication:/\b(explain|explained|tell|told|describe|share|shared|said|show)\b/i};
+const TYPES={L:'Learned',S:'Strength',G:'Growth',N:'Next step'};
+/* Ontario elementary curriculum strands (edit this list if your grade's document differs) */
+const ART=['A. Creating and Presenting','B. Reflecting, Responding, and Analysing','C. Exploring Forms and Cultural Contexts'];
+const CURR={
+ 'Math':['A. SEL Skills and the Mathematical Processes','B. Number','C. Algebra','D. Data','E. Spatial Sense','F. Financial Literacy'],
+ 'Language':['A. Literacy Connections and Applications','B. Foundations of Language','C. Comprehension','D. Composition'],
+ 'Science and Technology':['A. STEM Skills and Connections','B. Life Systems','C. Matter and Energy','D. Structures and Mechanisms','E. Earth and Space Systems'],
+ 'Social Studies':['A. Heritage and Identity','B. People and Environments','History (Grades 7–8)','Geography (Grades 7–8)'],
+ 'Health':['A. Social-Emotional Learning Skills','D. Healthy Living'],
+ 'Phys-Ed':['A. Social-Emotional Learning Skills','B. Active Living','C. Movement Competence'],
+ 'Music':['A. Creating and Performing','B. Reflecting, Responding, and Analysing','C. Exploring Forms and Cultural Contexts'],
+ 'Visual Arts':ART,'Drama':ART,'Dance':ART,
+ 'French':['A. Listening','B. Speaking','C. Reading','D. Writing'],
+ 'Other':[]};
+const SUBJ=Object.keys(CURR),TERMS=['Progress','Term 1','Term 2'],SUBJ_MAP={Writing:'Language',Reading:'Language',Science:'Science and Technology'};
+function defaultTerm(){const m=new Date().getMonth();return m===10||m===11||m===0?'Term 1':(m>=1&&m<=5?'Term 2':'Progress')}
+function normSubjects(){let ch=false;
+ S.lines.forEach(l=>{if(SUBJ_MAP[l.subject]){l.subject=SUBJ_MAP[l.subject];ch=true}});
+ const rk=o=>{const r={};for(const k in o){const p=k.split('|'),i=p[0]==='P'?3:2;if(p[i]&&SUBJ_MAP[p[i]]){p[i]=SUBJ_MAP[p[i]];ch=true}r[p.join('|')]=o[k]}return r};
+ S.marks=rk(S.marks);S.ai=rk(S.ai);if(SUBJ_MAP[S.subject]){S.subject=SUBJ_MAP[S.subject];ch=true}return ch}
+function buildCtx(){normSubjects();if(!CURR[S.subject])S.subject='Other';if(S.strand&&!CURR[S.subject].includes(S.strand))S.strand='';if(!TERMS.includes(S.term))S.term=defaultTerm();
+ $('#ctx').replaceChildren(
+  osel('Subject',SUBJ.map(x=>[x,x]),S.subject,v=>{S.subject=v;S.strand='';save();buildCtx()}),
+  osel('Strand',[['','Any strand']].concat(CURR[S.subject].map(x=>[x,x])),S.strand,v=>{S.strand=v;save()}),
+  osel('Reporting period',TERMS.map(x=>[x,x]),S.term,v=>{S.term=v;save()}),
+  osel('Grade',[['','Grade']].concat([1,2,3,4,5,6,7,8].map(g=>[String(g),'Grade '+g])),S.grade||'',v=>{S.grade=v;save()}))}
+const meta=l=>[l.subject,l.strand,l.term].filter(Boolean).join(' · ');
+const grpMeta=ls=>[ls[0].term,[...new Set(ls.map(l=>l.strand).filter(Boolean))].join(', ')].filter(Boolean).join(' · ');
+const termOf=(sid,d,sub)=>{const l=S.lines.find(x=>x.date===d&&x.subject===sub&&x.students.includes(sid)&&x.term);return l?l.term:S.term};
+let view='live',selS=null,active=[],capturing=false,listening=false,rec=null,interim='',selIds=[],mapRange=0,pTerm='',fTerm='',fSub='',checked=new Set(),bulkTo=new Set(),rmP=null,lEdit=null,trSel='',trForm=null,trDate='',trWk={},trCont=null,prDlg=null,edLbl=null,lessonOn=false,lessonMic=false,lessonSel=null,lHl=new Set(),lf={sub:'',strand:'',term:'',grade:'',from:'',to:''};
+
+/* ---------- listening ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function startMic(){
+ if(!SR){toast('Speech recognition needs Chrome or Edge. You can still type notes.');return}
+ rec=new SR();rec.continuous=true;rec.interimResults=true;if(S.lang)rec.lang=S.lang;
+ rec.onresult=e=>{let f='',i='';for(let n=e.resultIndex;n<e.results.length;n++){const r=e.results[n];if(r.isFinal)f+=r[0].transcript;else i+=r[0].transcript}
+  interim=(capturing||lessonOn)?i:'';if(f.trim())handle(f.trim());renderLive();renderLesson()};
+ rec.onend=()=>{if(listening)try{rec.start()}catch(e){}};
+ rec.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){listening=false;capturing=false;syncBar();toast('Microphone is blocked. Allow it in the address bar.')}};
+ listening=true;try{rec.start()}catch(e){}syncBar()}
+function stopMic(){lessonFinish();lessonMic=false;listening=false;capturing=false;interim='';try{rec.stop()}catch(e){}syncBar();renderLive();autoAnalyze()}
+function toggleCap(){capturing=!capturing;interim='';toast(capturing?'Capturing started':'Capturing stopped');syncBar();renderLive();if(!capturing)autoAnalyze()}
+function handle(t){if(lessonOn){addLessonText(fixText(t));return}t.split(/sound\s?gardens?/ig).forEach((p,i)=>{if(i>0)toggleCap();if(capturing&&p.trim())addText(fixText(p.trim()))})}
+const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function findNames(t){const first={};S.roster.forEach(s=>{const f=s.name.split(/\s+/)[0].toLowerCase();first[f]=(first[f]||0)+1});
+ return S.roster.filter(s=>{const f=s.name.split(/\s+/)[0].toLowerCase(),k=[s.name.toLowerCase().replace(/[.\s]+$/,'')];if(first[f]===1)k.push(f);(s.alias||[]).forEach(a=>k.push(a.toLowerCase()));return k.some(x=>new RegExp('\\b'+esc(x)+'\\b','i').test(t))}).map(s=>s.id)}
+function guess(t,named){const last=S.lines[S.lines.length-1];
+ if(named||/\?\s*$/.test(t)||/^(ok|okay|tell me|show me|what|why|how|can you|great|nice|good|i like|i see|try|remember)\b/i.test(t))return'T';
+ return last?(last.who==='T'?'S':last.who):'T'}
+function addText(t){const ids=findNames(t);const who=guess(t,ids.length>0);if(ids.length)active=ids;
+ const sp=who==='S'&&active.length===1?active[0]:undefined,last=S.lines[S.lines.length-1],gap=(S.joinSec||0)*1000;
+ if(gap&&!ids.length&&last&&last.ts&&last.date===day()&&last.who===who&&last.sp===sp&&last.subject===S.subject&&(last.strand||'')===(S.strand||'')&&last.term===S.term&&Date.now()-last.ts<=gap&&String(last.students)===String(active)){
+  joinTidy(last,t,'text');last.ts=Date.now();save();renderLive();return}
+ const tn=tidyNew(t);S.lines.push({id:uid(),ts:Date.now(),date:day(),subject:S.subject,who,text:tn.text,auto:tn.auto||undefined,students:[...active],strand:S.strand||undefined,term:S.term,sp});save();renderLive()}
+function suggest(ls,sid){const o={participation:Math.min(4,ls.filter(l=>l.who==='S'&&(!l.sp||l.sp===sid)).length)};
+ CATS.slice(1).forEach(([c])=>o[c]=Math.min(4,ls.filter(l=>KW[c].test(l.text)).length));return o}
+
+/* ---------- chrome ---------- */
+function syncBar(){const m=$('#mic'),c=$('#cap');
+ if(m){m.textContent=listening?'Stop listening':'Start listening';m.className='btn mic '+(listening?'on':'pri')}
+ c.disabled=!listening||lessonOn;c.textContent=lessonOn?'Lesson recording…':capturing?'Capturing — tap to pause':'Paused — say “Soundgarden”';c.className='btn '+(capturing?'rec':'')}
+$('#cap').onclick=toggleCap;
+buildCtx();
+const NAV=[['live','Live'],['students','Students'],['trackers','Trackers'],['parent','Parent call'],['lesson','Lesson Feedback'],['map','Map'],['settings','Settings']];
+NAV.forEach(([v,l])=>$('#nav').append(h('button',{dataset:{v},onclick:()=>{view=v;render()}},l)));
+function render(){document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));
+ const m=$('#main');m.replaceChildren();if(newYearDue())m.append(yearBanner());({live:vLive,students:vStudents,trackers:vTrackers,parent:vParent,lesson:vLesson,map:vMap,settings:vSettings})[view](m);syncBar()}
+
+/* ---------- live ---------- */
+function vLive(m){
+ if(!S.roster.length)m.append(h('div',{class:'card'},'Start by adding your class list in ',h('button',{class:'btn sm',onclick:()=>{view='settings';render()}},'Settings'),'.'));
+ m.append(h('div',{class:'grid'},
+  h('section',{class:'card'},h('h2',{},'Conversation'),h('div',{id:'bulk'}),h('div',{class:'convo'},h('div',{id:'tx',class:'tx'}),h('button',{id:'mic',class:'btn mic','aria-label':'Start or stop listening',onclick:()=>listening?stopMic():startMic()})),
+   h('div',{class:'row'},h('input',{id:'typed',placeholder:'Or type a note…','aria-label':'Type a note',onkeydown:e=>{if(e.key==='Enter')typed()}}),h('button',{class:'btn',onclick:typed},'Add note')),
+   h('p',{class:'note'},'Highlight text to mark it as Teacher said or Student said.')),
+  h('section',{},h('div',{class:'card'},h('h2',{},'Who is in this conversation'),h('div',{id:'chips',class:'chips'})),h('div',{id:'boxes'}))));
+ renderLive()}
+function typed(){const i=$('#typed'),v=i.value.trim();if(v){addText(v);i.value=''}}
+function renderLive(){if(view!=='live'||!$('#tx'))return;
+ const td=S.lines.filter(l=>l.date===day()),tx=$('#tx');tx.replaceChildren();
+ if(!td.length&&!interim)tx.append(h('div',{class:'empty'},listening?'Say “Soundgarden” to start capturing.':'Press Start listening, or type a note below.'));
+ td.forEach(l=>tx.append(h('div',{class:'ln',dataset:{id:l.id}},Object.assign(h('input',{type:'checkbox',class:'ck',autocomplete:'off','aria-label':'Select this comment',onchange:e=>{e.target.checked?checked.add(l.id):checked.delete(l.id);renderBulk()}}),{checked:checked.has(l.id)}),h('span',{class:'b '+l.who},spk(l)),
+  h('div',{class:'tx-t'},l.text,h('div',{class:'who'},meta(l)),whoRow(l)),h('button',{class:'icon noprint','aria-label':'Delete this line',title:'Delete this line',onclick:()=>delLine(l.id)},trash()))));
+ if(interim)tx.append(h('div',{class:'int'},interim));tx.scrollTop=tx.scrollHeight;
+ $('#chips').replaceChildren(...S.roster.map(s=>h('button',{class:'chip'+(active.includes(s.id)?' on':''),'aria-pressed':active.includes(s.id),onclick:()=>{active=active.includes(s.id)?active.filter(x=>x!==s.id):[...active,s.id];renderLive()}},nm(s))));
+ $('#boxes').replaceChildren(...active.map(id=>{const ls=td.filter(l=>l.students.includes(id)).slice(-5);
+  return h('div',{class:'box'},h('h3',{},nm(stu(id))),ls.length?ls.map(l=>h('div',{class:'ent'},h('span',{class:'b '+l.who},l.who==='T'?'T':(l.sp?spk(l):'S')),h('div',{class:'tx-t'},short(l.text,22)))):h('span',{class:'note'},'Waiting for comments…'))}));renderBulk()}
+
+/* highlight to tag */
+function checkSel(){const t=$('#tag'),sel=getSelection();selIds=[];
+ if(view==='live'&&sel.rangeCount&&!sel.isCollapsed)selIds=[...document.querySelectorAll('#tx .ln')].filter(e=>sel.containsNode(e,true)).map(e=>e.dataset.id);
+ if(!selIds.length){t.style.display='none';return}
+ const r=sel.getRangeAt(0).getBoundingClientRect();tagMenu(false);t.style.display='flex';t.style.top=Math.max(8,r.top-t.offsetHeight-8)+'px';t.style.left=Math.max(8,Math.min(innerWidth-370,r.left))+'px'}
+const inTag=e=>e.target.closest&&e.target.closest('#tag');document.addEventListener('mouseup',e=>{if(!inTag(e))setTimeout(checkSel,0)});document.addEventListener('touchend',e=>{if(!inTag(e))setTimeout(checkSel,300)});document.addEventListener('keyup',checkSel);
+$('#tag').addEventListener('mousedown',e=>e.preventDefault());
+function tagMenu(all){const t=$('#tag');let ids=[];
+ S.lines.forEach(l=>{if(selIds.includes(l.id))l.students.forEach(x=>{if(!ids.includes(x))ids.push(x)})});active.forEach(x=>{if(!ids.includes(x))ids.push(x)});
+ const full=all||!ids.length,list=S.roster.filter(r=>full||ids.includes(r.id));
+ t.replaceChildren(...[h('button',{style:'background:#E3EAFB;color:#2F5BD3',dataset:{w:'T'}},'Teacher said'),
+  list.map(r=>h('button',{style:'background:#FBEBCF;color:#A45F00',dataset:{w:'S',sid:r.id}},nm(r)+' said')),
+  S.roster.length?null:h('button',{style:'background:#FBEBCF;color:#A45F00',dataset:{w:'S'}},'Student said'),
+  full?null:h('button',{style:'background:#fff;color:#14212B',dataset:{more:'1'}},'Someone else…'),
+  h('button',{style:'background:#DCF0F1;color:#0A5C64',dataset:{label:'1'}},'Label: '+[S.subject,S.strand,S.term].filter(Boolean).join(' · '))].flat().filter(Boolean))}
+$('#tag').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.more){tagMenu(true);return}
+ if(b.dataset.label){S.lines.forEach(l=>{if(selIds.includes(l.id)){l.subject=S.subject;l.strand=S.strand||undefined;l.term=S.term}});save();getSelection().removeAllRanges();$('#tag').style.display='none';renderLive();toast('Labelled '+meta({subject:S.subject,strand:S.strand,term:S.term}));return}
+ const w=b.dataset.w,sid=b.dataset.sid;if(!w)return;
+ S.lines.forEach(l=>{if(selIds.includes(l.id)){l.who=w;l.manual=1;if(w==='T'||!sid)delete l.sp;else{l.sp=sid;if(!l.students.includes(sid))l.students.push(sid)}}});
+ save();getSelection().removeAllRanges();$('#tag').style.display='none';renderLive()});
+
+/* ---------- students ---------- */
+function vStudents(m){
+ if(!S.roster.length)return m.append(empty('Add your class list in Settings first.'));
+ if(!stu(selS))selS=S.roster[0].id;
+ m.append(h('div',{class:'grid2'},h('div',{class:'card list'},S.roster.map(s=>h('button',{class:'it'+(s.id===selS?' on':''),onclick:()=>{selS=s.id;render()}},nm(s),h('small',{},S.lines.filter(l=>l.students.includes(s.id)).length)))),detail(selS)))}
+const addItem=(sid,type,text,subject,term)=>{if(!text.trim())return;(S.items[sid]=S.items[sid]||[]).push({id:uid(),type,text:text.trim(),subject:subject||S.subject,term:term||S.term});save();render()};
+function marksRow(sid,d,sub,ls){const k=sid+'|'+d+'|'+sub,cur=S.marks[k]||{},sug=(S.ai[k]&&S.ai[k].marks)||suggest(ls,sid);
+ return h('div',{class:'marks'},CATS.map(([c,lab])=>h('div',{class:'mk'},lab,h('span',{class:'dots'},[1,2,3,4].map(n=>h('button',{class:'dot'+(cur[c]!=null?(cur[c]>=n?' on':''):(sug[c]>=n?' sug':'')),'aria-label':lab+' '+n,onclick:()=>{const mm=S.marks[k]=S.marks[k]||{};mm[c]=mm[c]===n?null:n;save();render()}}))))))}
+function detail(sid){
+ const mine=S.lines.filter(l=>l.students.includes(sid)&&(!fTerm||l.term===fTerm)&&(!fSub||l.subject===fSub)),g={};mine.forEach(l=>(g[l.date+'|'+l.subject]=g[l.date+'|'+l.subject]||[]).push(l));
+ const type=h('select',{'aria-label':'Note type'},Object.entries(TYPES).map(([k,v])=>h('option',{value:k},v))),inp=h('input',{placeholder:'What did they learn, do well, or need next?'}),subSel=h('select',{'aria-label':'Subject'},SUBJ.map(x=>h('option',{value:x,selected:x===S.subject?'':null},x)));
+ const items=S.items[sid]||[];
+ return h('div',{},
+  h('div',{class:'card'},h('div',{class:'row',style:'align-items:center;justify-content:space-between;flex-wrap:wrap'},h('h2',{style:'margin:0'},nm(stu(sid))),
+   h('div',{class:'seg'},[['dots','Dot jots'],['full','Full text']].map(([k,l])=>h('button',{class:S.mode===k?'on':'',onclick:()=>{S.mode=k;save();render()}},l)))),
+   h('div',{class:'row noprint',style:'margin-top:10px'},osel('Filter by period',[['','All periods']].concat(TERMS.map(t=>[t,t])),fTerm,v=>{fTerm=v;render()}),osel('Filter by subject',[['','All subjects']].concat(SUBJ.map(t=>[t,t])),fSub,v=>{fSub=v;render()})),h('h3',{},'Anecdotal comments'),h('div',{class:'row',style:'flex-wrap:wrap'},type,subSel,inp,h('button',{class:'btn pri',onclick:()=>addItem(sid,type.value,inp.value,subSel.value,S.term)},'Add')),
+   Object.keys(TYPES).map(k=>items.filter(i=>i.type===k).length?h('div',{},h('h3',{},TYPES[k]),items.filter(i=>i.type===k).map(itemRow)):null)),
+  trackerPanel(sid),
+  Object.keys(g).sort().reverse().map(key=>{const[d,sub]=key.split('|'),ls=g[key];
+   return h('div',{class:'card'},h('div',{class:'row',style:'align-items:center;justify-content:space-between'},h('h2',{style:'margin:0'},fd(d)+' · '+sub+(grpMeta(ls)?' · '+grpMeta(ls):''),h('button',{class:'icon noprint',title:'Edit subject, strand or period','aria-label':'Edit subject for '+fd(d)+' '+sub,style:'vertical-align:middle',onclick:()=>{edLbl={sid,anchor:'g:'+key,ids:ls.map(l=>l.id)};render()}},pencil())),S.aiOn&&S.sync.url?h('button',{class:'btn sm noprint',onclick:()=>analyze(sid,d,sub,false)},S.ai[sid+'|'+d+'|'+sub]?'Re-run AI':'Analyze with AI'):null),edLbl&&edLbl.anchor==='g:'+key?lblEditor(edLbl):null,marksRow(sid,d,sub,ls),h('p',{class:'note'},'Outlined dots are suggestions. Tap to confirm.'),aiPanel(sid,d,sub),
+    ls.map(l=>h('div',{},h('div',{class:'ent'},h('span',{class:'b '+l.who},spk(l)),
+     h('div',{class:'tx-t'},S.mode==='dots'?'• '+short(l.text):l.text,l.students.length>1?h('div',{class:'who'},'With '+l.students.filter(i=>i!==sid).map(i=>nm(stu(i))).join(', ')):null),
+     h('button',{class:'btn sm',onclick:()=>addItem(sid,'S',S.mode==='dots'?short(l.text):l.text,l.subject,l.term)},'+ Strength'),
+     h('button',{class:'btn sm',onclick:()=>addItem(sid,'N',S.mode==='dots'?short(l.text):l.text,l.subject,l.term)},'+ Next step'),
+     h('button',{class:'icon noprint',title:'Change this comment’s subject','aria-label':'Edit subject of this comment',onclick:()=>{edLbl={sid,anchor:'l:'+l.id,ids:[l.id]};render()}},pencil()),h('button',{class:'icon noprint','aria-label':'Remove this line from '+nm(stu(sid)),title:'Remove from this student',onclick:()=>delLine(l.id,sid)},trash())),edLbl&&edLbl.anchor==='l:'+l.id?lblEditor(edLbl):null)))}),
+  mine.length?null:empty('No conversations yet. Notes appear here when this student is named.'))}
+function itemRow(i){return h('div',{class:'item'},h('span',{},i.text,i.subject?h('span',{class:'tag'},' · '+i.subject+(i.term?' · '+i.term:'')):null),h('button',{class:'btn sm noprint','aria-label':'Delete',onclick:()=>{for(const k in S.items)S.items[k]=S.items[k].filter(x=>x.id!==i.id);save();render()}},'Delete'))}
+
+/* ---------- parent call ---------- */
+function pItems(sid,sub,lines){
+ const pa=S.ai['P|'+sid+'|'+(pTerm||'All')+'|'+sub],st=[],nx=[],seen=new Set();
+ const add=(arr,text,src,id)=>{const k=(arr===st?'S':'N')+text.toLowerCase();if(!text||seen.has(k))return;seen.add(k);arr.push({text,src,id})};
+ (S.items[sid]||[]).filter(i=>(i.subject||'General')===sub&&(!pTerm||!i.term||i.term===pTerm)).forEach(i=>add(i.type==='N'?nx:st,i.text,'saved',i.id));
+ if(pa){(pa.strengths||[]).forEach(x=>add(st,rest(x),'ai'));(pa.next_steps||[]).forEach(x=>add(nx,rest(x),'ai'))}
+ else[...new Set(lines.map(l=>l.date))].forEach(d=>{const a=S.ai[sid+'|'+d+'|'+sub];if(a){[...(a.learned||[]),...(a.strengths||[]),...(a.growth||[])].forEach(x=>add(st,rest(x),'ai'));(a.next_steps||[]).forEach(x=>add(nx,rest(x),'ai'))}});
+ return{st,nx,sum:pa?rest(pa.summary):''}}
+function colBox(title,cls,items,type,sid,sub){const inp=h('input',{placeholder:'Add…','aria-label':'Add to '+title,class:'noprint'});
+ return h('div',{class:'card '+cls},h('h3',{style:'margin-top:0'},title),
+  items.map(i=>i.src==='saved'?itemRow({id:i.id,text:i.text}):h('div',{class:'item'},h('span',{},i.text),h('button',{class:'btn sm noprint',onclick:()=>addItem(sid,type,i.text,sub,pTerm||S.term)},'Keep'))),
+  h('div',{class:'row noprint',style:'margin-top:10px'},inp,h('button',{class:'btn',onclick:()=>addItem(sid,type,inp.value,sub,pTerm||S.term)},'Add')))}
+async function summarizeParent(sid){
+ if(!S.aiOn||!S.sync.url)return toast('Turn on the AI helper and connect your sheet in Settings first.');
+ const by={};S.lines.filter(l=>l.students.includes(sid)&&(!pTerm||l.term===pTerm)).forEach(l=>(by[l.subject]=by[l.subject]||[]).push(l));
+ const subjects=Object.keys(by).map(sub=>({subject:sub,lines:by[sub].slice(-40).map(l=>({date:l.date,strand:l.strand,who:l.who==='T'?'Teacher':'Student',speaker:l.sp?lbl(l.sp):undefined,text:hide(l.text).slice(0,300)}))}));
+ if(!subjects.length)return toast('No conversations to summarize in this period.');
+ toast('AI is summarizing by subject…');
+ try{const r=await api('analyze',{payload:{task:'parent',student:lbl(sid),term:pTerm||'All terms',subjects}});if(r.error)return toast('AI: '+r.error);
+  const arr=x=>Array.isArray(x)?x.map(String).slice(0,6):[];
+  ((r.result||{}).subjects||[]).forEach(o=>{if(by[o.subject])S.ai['P|'+sid+'|'+(pTerm||'All')+'|'+o.subject]={summary:String(o.summary||''),strengths:arr(o.strengths),next_steps:arr(o.next_steps),n:by[o.subject].length}});
+  save();if(view==='parent')render();toast('Summary ready.')}catch(e){toast('Could not reach the AI helper.')}}
+function vParent(m){
+ if(!S.roster.length)return m.append(empty('Add your class list in Settings first.'));
+ if(!stu(selS))selS=S.roster[0].id;
+ const sid=selS,bySub={};
+ S.lines.filter(l=>l.students.includes(sid)&&(!pTerm||l.term===pTerm)).forEach(l=>(bySub[l.subject]=bySub[l.subject]||[]).push(l));
+ (S.items[sid]||[]).forEach(i=>{if(!pTerm||!i.term||i.term===pTerm){const k=i.subject||'General';bySub[k]=bySub[k]||[]}});
+ const subs=SUBJ.concat(Object.keys(bySub).filter(x=>!SUBJ.includes(x)&&x!=='General'),['General']).filter(x=>bySub[x]);
+ m.append(h('div',{class:'card row noprint',style:'align-items:center;flex-wrap:wrap'},h('h2',{style:'margin:0;flex:none'},'Parent call'),
+   osel('Student',S.roster.map(s=>[s.id,nm(s)]),sid,v=>{selS=v;render()}),
+   osel('Period',[['','All terms']].concat(TERMS.map(t=>[t,t])),pTerm,v=>{pTerm=v;render()}),
+   S.aiOn&&S.sync.url?h('button',{class:'btn pri',onclick:()=>summarizeParent(sid)},'Summarize by subject with AI'):null,
+   h('button',{class:'btn',onclick:()=>print()},'Print this page'),S.trackers.some(t=>t.sid===sid)?h('button',{class:'btn',onclick:()=>doPrint(S.trackers.filter(t=>t.sid===sid),'done',0)},'Print trackers'):null),
+  h('h2',{},nm(stu(sid))+' — '+(pTerm||'All terms')));
+ const tc=trackerSummary(sid);if(tc)m.append(tc);
+ if(!subs.length)return tc?null:m.append(empty('No conversations or comments for this student in this period yet.'));
+ subs.forEach(sub=>{const p=pItems(sid,sub,bySub[sub]);
+  m.append(h('div',{class:'card'},h('h2',{},sub),p.sum?h('div',{class:'ai'},h('h3',{},'Talking points'),h('p',{},p.sum)):null,
+   h('div',{class:'cols'},colBox('Strengths','',p.st,'S',sid,sub),colBox('Next steps','n',p.nx,'N',sid,sub))))})}
+
+/* ---------- map ---------- */
+function vMap(m){
+ const cut=mapRange?new Date(Date.now()-mapRange*864e5).toLocaleDateString('en-CA'):'',cnt={},ed={};
+ S.lines.filter(l=>l.date>=cut).forEach(l=>l.students.forEach(a=>{cnt[a]=(cnt[a]||0)+1;l.students.forEach(b=>{if(a<b)ed[a+'|'+b]=(ed[a+'|'+b]||0)+1})}));
+ const sel=h('select',{'aria-label':'Time range',onchange:e=>{mapRange=+e.target.value;render()}},[[0,'All time'],[7,'Last 7 days'],[30,'Last 30 days']].map(([v,l])=>h('option',{value:v,selected:v===mapRange?'':null},l)));
+ m.append(h('div',{class:'card'},h('div',{class:'row',style:'align-items:center'},h('h2',{style:'margin:0;flex:none'},'Connections'),sel),h('p',{class:'note'},'Lines join students who were in the same conversation. Thicker means more often. Bigger dots have more notes.')));
+ if(!S.roster.length||!Object.keys(ed).length)return m.append(empty('The map appears once students have been grouped together in conversations.'));
+ const n=S.roster.length,pos={};S.roster.forEach((s,i)=>{const a=i/n*Math.PI*2-Math.PI/2;pos[s.id]=[320+190*Math.cos(a),230+170*Math.sin(a)]});
+ const svg=sv('svg',{viewBox:'0 0 640 460',role:'img','aria-label':'Student connection map',style:'width:100%;background:#fff;border:1px solid var(--line);border-radius:14px'});
+ Object.entries(ed).forEach(([k,w])=>{const[a,b]=k.split('|');if(pos[a]&&pos[b])svg.append(sv('line',{x1:pos[a][0],y1:pos[a][1],x2:pos[b][0],y2:pos[b][1],stroke:'#0E7C86','stroke-opacity':.55,'stroke-width':Math.min(10,1+w)}))});
+ S.roster.forEach(s=>{const[x,y]=pos[s.id],c=sv('g',{style:'cursor:pointer',tabindex:0});const go=()=>{selS=s.id;view='students';render()};c.onclick=go;c.onkeydown=e=>{if(e.key==='Enter')go()};
+  const t=sv('text',{x,y:y+(y<230?-16-Math.min(8,cnt[s.id]||0):24),'text-anchor':'middle'});t.textContent=nm(s);
+  c.append(sv('circle',{cx:x,cy:y,r:7+Math.min(10,cnt[s.id]||0),fill:cnt[s.id]?'#0E7C86':'#B9C6CD'}),t);svg.append(c)});
+ m.append(svg)}
+
+/* ---------- settings ---------- */
+function vSettings(m){
+ const ta=h('textarea',{'aria-label':'Class list',placeholder:'One student per line. Use a first name and last initial, like Emily R.'},S.roster.map(s=>s.name+(s.alias&&s.alias.length?' = '+s.alias.join(', '):'')).join('\n'));
+ m.append(h('div',{class:'card'},h('h2',{},'Class list'),ta,h('p',{class:'note'},'One name per line. If two students share a first name, add a last initial to each. If the microphone often mishears a name, add the way it writes it after an equals sign, for example: Emily R. = Emilie, Amelie'),
+  h('button',{class:'btn pri',onclick:()=>{const rows=[],seen=new Set();ta.value.split('\n').map(x=>x.trim()).filter(Boolean).forEach(l=>{const p=l.split('='),name=p[0].trim();if(!name||seen.has(name))return;seen.add(name);rows.push({name,alias:(p[1]||'').split(',').map(x=>x.trim()).filter(Boolean)})});
+   const old=S.roster;S.roster=rows.slice(0,60).map(o=>{const r=old.find(x=>x.name===o.name)||{id:'',name:o.name};r.alias=o.alias.length?o.alias:undefined;return r});S.roster.forEach(r=>{if(!r.id)r.id=newId()});save();toast('Class list saved');render()}},'Save class list')),
+ syncCard(),yearCard(),joinCard(),speechCard(),
+ h('div',{class:'card'},h('h2',{},'Privacy'),
+  h('p',{},'Notes stay in this browser unless you connect your Google Sheet. If the AI helper is on, student names are swapped for codes before any text leaves your browser. No audio is recorded or saved, only text, and text is only kept while capturing is on.'),
+  h('p',{},'Chrome and Edge send microphone audio to their own speech service to turn it into text. Ask your school or district whether that is allowed before using real student names.'),
+  h('label',{},h('input',{type:'checkbox',checked:S.hide?'':null,onchange:e=>{S.hide=e.target.checked;save();render()}}),' Show initials instead of names on screen'),
+  h('div',{class:'row',style:'margin-top:14px;flex-wrap:wrap'},h('button',{class:'btn',onclick:exportCsv},'Export notes (CSV)'),
+   h('button',{class:'btn',style:'color:var(--rec)',onclick:()=>{if(confirm('Delete all students, notes, marks and lessons? If your sheet is connected, they are removed from the sheet and your other devices too. This cannot be undone.')){const t={};eachRec(id=>{t[id]=Date.now()});S=Object.assign(fresh(),{sync:S.sync,aiOn:S.aiOn,tomb:Object.assign({},S.tomb,t)});save();active=[];selS=null;render()}}},'Delete all data'))))}
+const stu2=n=>S.roster.find(r=>r.name===n);
+function exportCsv(){const q=v=>{v=String(v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'},rows=[['date','subject','student','speaker','text','period','strand']];
+ S.lines.forEach(l=>(l.students.length?l.students:['']).forEach(id=>rows.push([l.date,l.subject,id?nm(stu(id)):'(unassigned)',l.who==='T'?'Teacher':(l.sp&&stu(l.sp)?'Student: '+stu(l.sp).name:'Student'),l.text,l.term||'',l.strand||''])));
+ h('a',{href:URL.createObjectURL(new Blob([rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'})),download:'anecdotal-notes.csv'}).click()}
+/* ---------- sheet + AI ---------- */
+const lbl=id=>'Student '+(parseInt(String(id).slice(-3),10)||0);
+const rest=t=>String(t||'').replace(/Student (\d+)/g,(m,n)=>{const r=S.roster.find(x=>parseInt(String(x.id).slice(-3),10)===+n);return r?nm(r):m});
+function hide(t){const p=[];S.roster.forEach(s=>{const f=s.name.split(/\s+/)[0],dup=S.roster.filter(r=>r.name.split(/\s+/)[0].toLowerCase()===f.toLowerCase()).length>1;p.push([s.name.replace(/[.\s]+$/,''),lbl(s.id)]);(s.alias||[]).forEach(a=>p.push([a,lbl(s.id)]));if(!dup)p.push([f,lbl(s.id)])});
+ p.sort((a,b)=>b[0].length-a[0].length).forEach(([k,c])=>t=t.replace(new RegExp('\\b'+esc(k)+'\\b','ig'),c));return t}
+const netMsg=e=>e.name==='AbortError'?'The sheet took too long to answer. Wait a minute and try again.':"Can't reach the web app. Open the URL in a browser tab: you should see {\"ok\":true}. If not, set Who has access to Anyone and deploy again.";
+async function api(action,extra,ms){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms||45000);
+ try{const r=await fetch(S.sync.url,{method:'POST',body:JSON.stringify(Object.assign({action,key:S.sync.key},extra)),signal:c.signal});return await r.json()}finally{clearTimeout(t)}}
+const setSync=t=>{$('#sync').textContent=t;const m=$('#syncmsg');if(m)m.textContent=t};
+let syncBusy=false,syncAgain=false,lastRev=null;
+const clock=()=>new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+function queueSync(){if(syncing||!S.sync||!S.sync.url)return;if(syncBusy){syncAgain=true;return}clearTimeout(syncT);syncT=setTimeout(syncNow,4000)}
+const wire=()=>({trackers:S.trackers,tracks:S.tracks,roster:S.roster,lines:S.lines,lessons:S.lessons,items:S.items,marks:S.marks,ai:S.ai,tomb:S.tomb,idYear:S.idYear,idLast:S.idLast});
+function flat(s){const m={};(s.roster||[]).forEach(r=>m['st:'+r.id]={k:'st',rec:r});(s.lines||[]).forEach(r=>m['ln:'+r.id]={k:'ln',rec:r});(s.lessons||[]).forEach(r=>m['ls:'+r.id]={k:'ls',rec:r});
+ for(const sid in s.items||{})(s.items[sid]||[]).forEach(r=>m['it:'+r.id]={k:'it',sid,rec:r});
+ for(const k in s.marks||{})m['mk:'+k]={k:'mk',key:k,rec:s.marks[k]};for(const k in s.ai||{})m['ai:'+k]={k:'ai',key:k,rec:s.ai[k]};(s.trackers||[]).forEach(r=>m['tr:'+r.id]={k:'tr',rec:r});for(const k in s.tracks||{})m['te:'+k]={k:'te',key:k,rec:s.tracks[k]};return m}
+function place(o,p){const r=p.rec;if(p.k==='st')o.roster.push(r);else if(p.k==='ln')o.lines.push(r);else if(p.k==='ls')o.lessons.push(r);
+ else if(p.k==='it')(o.items[p.sid]=o.items[p.sid]||[]).push(r);else if(p.k==='mk')o.marks[p.key]=r;else if(p.k==='tr')o.trackers.push(r);else if(p.k==='te')o.tracks[p.key]=r;else o.ai[p.key]=r}
+/* merge two copies record by record: the most recently changed copy wins; a deletion beats an older copy */
+function mergeState(L,R){const a=flat(L),b=flat(R),tomb={},o={roster:[],lines:[],lessons:[],items:{},marks:{},ai:{},trackers:[],tracks:{}};let need=false,remote=false;
+ const lt=L.tomb||{},rt=R.tomb||{},cut=Date.now()-180*864e5,U=r=>r.u||0;
+ new Set([...Object.keys(lt),...Object.keys(rt)]).forEach(t=>{const u=Math.max(lt[t]||0,rt[t]||0);if(u>cut){tomb[t]=u;if((rt[t]||0)<u)need=true}});
+ new Set([...Object.keys(a),...Object.keys(b)]).forEach(t=>{const x=a[t],y=b[t],p=!y?x:!x?y:(U(x.rec)>U(y.rec)?x:y);
+  if(tomb[t]&&tomb[t]>=U(p.rec)){if(y)need=true;if(x)remote=true;return}
+  if(p===x){if(!y||U(x.rec)>U(y.rec))need=true}else if(!x||JSON.stringify(x.rec)!==JSON.stringify(y.rec))remote=true;
+  place(o,p)});
+ o.roster.sort((p,q)=>String(p.id).localeCompare(String(q.id)));o.lines.sort((p,q)=>(p.ts||0)-(q.ts||0));
+ o.idLast=Math.max(L.idLast||0,R.idLast||0);if((R.idLast||0)<o.idLast)need=true;o.idYear=L.idYear||R.idYear||null;if(!R.idYear&&o.idYear)need=true;
+ o.tomb=tomb;o.needPush=need;o.remoteNew=remote;return o}
+function applyMerged(m){S.roster=m.roster;S.lines=m.lines;S.lessons=m.lessons;S.items=m.items;S.marks=m.marks;S.ai=m.ai;S.trackers=m.trackers||[];S.tracks=m.tracks||{};S.tomb=m.tomb;S.idLast=m.idLast;S.idYear=m.idYear;
+ normSubjects();migrateTrackers();S.h={};eachRec((t,r)=>{S.h[t]=recHash(r)});try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+ if(m.remoteNew&&!lessonOn&&!lEdit){if(view==='live')renderLive();else if(view!=='settings')render()}}
+async function syncNow(){
+ if(!S.sync||!S.sync.url)return;if(syncBusy){syncAgain=true;return}
+ syncBusy=true;setSync('Syncing…');
+ try{for(let i=0;i<3;i++){
+   const r=await api('pull');
+   if(r.error){setSync(r.error==='Wrong passcode'?'Wrong passcode. Check it in Settings.':'Sheet error: '+r.error);return}
+   const m=mergeState(wire(),r.state||{});applyMerged(m);lastRev=r.rev;
+   if(!m.needPush){setSync('Up to date '+clock());return}
+   const w=await api('push',{state:wire(),baseRev:r.rev});
+   if(w.conflict)continue;
+   if(w.error){setSync('Sheet error: '+w.error);return}
+   lastRev=w.rev;setSync('Synced '+clock());return}
+  setSync('The other device was saving. Trying again shortly.');syncAgain=true}
+ catch(e){setSync(netMsg(e))}
+ finally{syncBusy=false;if(syncAgain){syncAgain=false;queueSync()}}}
+async function loadReplace(){if(!S.sync.url)return toast('Add the web app URL in Settings first.');setSync('Loading…');
+ try{const r=await api('pull');if(r.error){setSync('Sheet error: '+r.error);return}const st=r.state||{};
+  applyMerged({roster:st.roster||[],lines:st.lines||[],lessons:st.lessons||[],items:st.items||{},marks:st.marks||{},ai:st.ai||{},trackers:st.trackers||[],tracks:st.tracks||{},tomb:st.tomb||{},idLast:st.idLast||0,idYear:st.idYear||null,remoteNew:false});
+  lastRev=r.rev;setSync('Loaded from sheet '+clock());render()}catch(e){setSync(netMsg(e))}}
+async function forcePush(){if(!S.sync.url)return toast('Add the web app URL in Settings first.');setSync('Saving…');
+ try{const w=await api('push',{state:wire(),force:true});setSync(w.error?'Sheet error: '+w.error:'Sheet replaced '+clock());if(w.rev)lastRev=w.rev}catch(e){setSync(netMsg(e))}}
+function migrateCodes(){const c=S.codes||{};if(!Object.keys(c).length)return false;const inv={};for(const id in c)inv[c[id]]=parseInt(String(id).slice(-3),10)||0;
+ const f=t=>t.replace(/Student (\d+)/g,(m,n)=>inv[n]!=null?'Student '+inv[n]:m);for(const k in S.ai)if(k!=='__codes')S.ai[k]=JSON.parse(f(JSON.stringify(S.ai[k])));S.codes={};S.n=0;return true}
+async function analyze(sid,d,sub,quiet){
+ if(!S.aiOn||!S.sync.url)return;const k=sid+'|'+d+'|'+sub,ls=S.lines.filter(l=>l.date===d&&l.subject===sub&&l.students.includes(sid));if(!ls.length)return;
+ if(!quiet)toast('AI is reading the notes…');
+ const payload={student:lbl(sid),subject:sub,lines:ls.map(l=>({who:l.who==='T'?'Teacher':'Student',speaker:l.sp?lbl(l.sp):undefined,strand:l.strand,text:hide(l.text)}))};
+ try{const r=await api('analyze',{payload});if(r.error)return toast('AI: '+r.error);const a=r.result||{},arr=x=>Array.isArray(x)?x.map(String).slice(0,6):[],mk={};
+  CATS.forEach(([c])=>mk[c]=Math.max(0,Math.min(4,Math.round(+(a.marks||{})[c]||0))));
+  (a.speakers||[]).forEach((w,i)=>{if(ls[i]&&!ls[i].manual&&(w==='T'||w==='S')){ls[i].who=w;if(w==='T')delete ls[i].sp}});
+  S.ai[k]={marks:mk,learned:arr(a.learned),strengths:arr(a.strengths),growth:arr(a.growth),next_steps:arr(a.next_steps),dots:arr(a.dots),full:String(a.full||''),why:(()=>{const w={};CATS.forEach(([c])=>{const v=(a.marks_why||{})[c];if(v)w[c]=String(v).slice(0,300)});return Object.keys(w).length?w:undefined})(),n:ls.length,used:[]};
+  save();view==='live'?renderLive():view==='students'&&render()}catch(e){toast('Could not reach the AI helper.')}}
+async function autoAnalyze(){if(!S.aiOn||!S.sync||!S.sync.url)return;
+ for(const s of S.roster){const ls=S.lines.filter(l=>l.date===day()&&l.subject===S.subject&&l.students.includes(s.id)),a=S.ai[s.id+'|'+day()+'|'+S.subject];
+  if(ls.length&&(!a||a.n!==ls.length))await analyze(s.id,day(),S.subject,true)}}
+function aiPanel(sid,d,sub){const a=S.ai[sid+'|'+d+'|'+sub];if(!a)return null;a.used=a.used||[];
+ const rows=[];[['learned','L','Learned'],['strengths','S','Strength'],['growth','G','Growth'],['next_steps','N','Next step']].forEach(([f,t,lab])=>(a[f]||[]).forEach(x=>{if(!a.used.includes(x))rows.push({t,lab,x})}));
+ return h('div',{class:'ai'},h('h3',{},'AI summary'),S.mode==='dots'?h('ul',{},(a.dots||[]).map(x=>h('li',{},rest(x)))):h('p',{},rest(a.full)),
+  a.why?h('h3',{},'Why these marks'):null,a.why?CATS.map(([c,lab])=>a.why[c]?h('div',{class:'item'},h('span',{},h('span',{class:'tag'},lab+' · AI suggested '+(a.marks?a.marks[c]:'?')+'/4: '),rest(a.why[c]))):null):null,
+  rows.length?h('h3',{},'Suggested comments'):null,
+  rows.map(r=>h('div',{class:'item'},h('span',{},h('span',{class:'tag'},r.lab+': '),rest(r.x)),h('button',{class:'btn sm',onclick:()=>{a.used.push(r.x);addItem(sid,r.t,rest(r.x),sub,termOf(sid,d,sub))}},'Add'))),
+  rows.length>1?h('button',{class:'btn sm',style:'margin-top:8px',onclick:()=>{rows.forEach(r=>{a.used.push(r.x);(S.items[sid]=S.items[sid]||[]).push({id:uid(),type:r.t,text:rest(r.x),subject:sub,term:termOf(sid,d,sub)})});save();render()}},'Add all'):null)}
+async function connect(url,key){S.sync={url:url.trim(),key:key.trim()};syncing=true;save();syncing=false;
+ if(!/^https:\/\/script\.google\.com\/.+\/exec$/.test(S.sync.url))return setSync('The URL should start with https://script.google.com and end in /exec.');
+ if(!S.sync.key)return setSync('Enter your passcode.');
+ setSync('Connecting… the first try can take 10 to 20 seconds.');
+ try{const r=await api('ping');
+  if(r.error&&r.error!=='Unknown action')return setSync(r.error==='Wrong passcode'?'Wrong passcode. Tick Show passcode and check it matches the PASSCODE property exactly.':'Sheet error: '+r.error);
+  setSync('Connected. Syncing…');await syncNow()}catch(e){setSync(netMsg(e))}}
+function syncCard(){const u=h('input',{placeholder:'Web app URL (ends in /exec)','aria-label':'Web app URL',value:S.sync.url}),k=h('input',{type:'password',placeholder:'Passcode you made up','aria-label':'Passcode',value:S.sync.key});
+ return h('div',{class:'card'},h('h2',{},'Google Sheet and AI helper'),h('div',{class:'row',style:'flex-wrap:wrap'},u,k),
+  h('label',{style:'display:block;margin:10px 0 0'},h('input',{type:'checkbox',onchange:e=>{k.type=e.target.checked?'text':'password'}}),' Show passcode'),
+  h('label',{style:'display:block;margin:6px 0 10px'},h('input',{type:'checkbox',checked:S.aiOn?'':null,onchange:e=>{S.aiOn=e.target.checked;save()}}),' AI helper: sort notes into marks and comments'),
+  h('div',{class:'row',style:'flex-wrap:wrap'},h('button',{class:'btn pri',onclick:()=>connect(u.value,k.value)},'Save and connect'),
+   h('button',{class:'btn',onclick:syncNow},'Sync now'),h('button',{class:'btn',onclick:()=>confirm('Replace everything on this device with what is in the sheet?')&&loadReplace()},'Replace this device with the sheet'),h('button',{class:'btn',onclick:()=>confirm('Replace everything in the sheet with what is on this device? Use this only if the sheet has the wrong data.')&&forcePush()},'Replace the sheet with this device')),
+  h('p',{id:'syncmsg',class:'note',role:'status'},''),
+  h('p',{class:'note'},'Only the web app URL and the passcode go here. The Gemini key stays in the Apps Script, never in this page. Phones and computers stay in step automatically: each device merges its changes with the sheet a few seconds after you make them, and again about every 30 seconds and whenever you return to the app. Please don\'t edit the app\'s tabs by hand in the sheet.'))}
+/* ---------- trackers ---------- */
+/* A tracker has criteria (rows) and is recorded daily (Mon to Fri columns), weekly (a column per week) or monthly (a column per month). */
+const PRESETS={'Rubric (4 levels)':['Not yet','Developing','Proficient','Extending'],'How often':['Never','Sometimes','Often','Always'],'How much help':['Needs support','Some support','Independent'],'Met or not met':['Not met','Met']};
+const LVC=['#F6DCC8','#F8EBB9','#D5EBCB','#9ED6BD','#52B0A6','#0E7C86'],lvColor=(n,i)=>LVC[n<2?5:Math.round(i*5/(n-1))];
+const ds=d=>d.toLocaleDateString('en-CA'),dt=s=>new Date(s+'T12:00'),addD=(s,n)=>{const d=dt(s);d.setDate(d.getDate()+n);return ds(d)},
+ mon=s=>{const d=dt(s);d.setDate(d.getDate()-(d.getDay()+6)%7);return ds(d)},addM=(s,n)=>{const d=dt(s);d.setMonth(d.getMonth()+n,1);return ds(d)};
+const termOfDate=s=>{const m=dt(s).getMonth();return m===10||m===11||m===0?'Term 1':(m>=1&&m<=5?'Term 2':'Progress')};
+const RANGES=['Progress','Term 1','Term 2','All year','Choose dates'],FREQ={daily:'Daily',weekly:'Weekly',monthly:'Monthly'};
+function termRange(name){const y=schoolYear(),Y=String(y),Z=String(y+1);
+ return name==='Progress'?[Y+'-09-01',Y+'-10-31']:name==='Term 1'?[Y+'-11-01',Z+'-01-31']:name==='Term 2'?[Z+'-02-01',Z+'-06-30']:[Y+'-09-01',Z+'-06-30']}
+function fixRange(name,s0,e0){if(name==='Choose dates')return[s0,e0];const r=termRange(name),t=day();return[t>r[0]&&t<=r[1]?t:r[0],r[1]]}
+const rangeText=T=>fd(T.start)+' to '+fd(T.end)+(T.rng&&T.rng!=='Choose dates'?' ('+T.rng+')':'');
+function trState(T){if(T.status==='stopped')return'stopped';const t=day();if(t>T.end)return'ended';if(addD(t,7)>=T.end)return'ending';return'active'}
+const symOf=(T,v)=>v===''||v==null?'':T.type==='check'?(v==='y'?'✓':'✗'):String(+v+1);
+const lblOf=(T,v)=>T.type==='check'?(v==='y'?'Done':v==='n'?'Not yet':''):(((T.levels||[])[+v]||{}).label||'');
+function nextVal(T,v){if(T.type==='check')return v===''?'y':v==='y'?'n':'';const n=(T.levels||[]).length;return v===''?'0':(+v+1<n?String(+v+1):'')}
+function cellStyle(T,v){if(v==='')return'';if(T.type==='check')return'background:'+(v==='y'?'#DDF3E6':'#FBE3E3')+';border-color:'+(v==='y'?'#1F8A4C':'#C93434');
+ const c=lvColor((T.levels||[]).length,+v);return'background:'+c+';border-color:var(--ink)'+(c==='#0E7C86'?';color:#fff':'')}
+function migrateTrackers(){let ch=false;
+ S.trackers.forEach(t=>{if(!t.criteria){t.criteria=[{id:'c1',label:t.name}];ch=true}if(!t.freq){t.freq='daily';ch=true}if(!t.status){t.status='active';ch=true}
+  if(!t.rng){const r=termRange('All year');t.rng='All year';t.start=t.created&&t.created<r[0]?t.created:r[0];t.end=r[1];ch=true}});
+ Object.keys(S.tracks).forEach(k=>{const e=S.tracks[k];if(e.cid)return;const T=S.trackers.find(t=>t.id===e.tid);e.cid=T?T.criteria[0].id:'c1';delete S.tracks[k];S.tracks[e.tid+'|'+e.cid+'|'+e.date]=e;ch=true});
+ return ch}
+function setTrack(tid,cid,date,v,note){const k=tid+'|'+cid+'|'+date,cur=S.tracks[k]||{},nv=v===undefined?(cur.v||''):v,nn=note===undefined?(cur.note||''):note;
+ if(!nv&&!nn)delete S.tracks[k];else S.tracks[k]={tid,cid,date,v:nv,note:nn,term:cur.term||termOfDate(date)};save();render()}
+function delTracker(id){const T=S.trackers.find(x=>x.id===id);if(!T||!confirm('Delete the tracker “'+T.name+'” and everything recorded on it? (To keep the results, use Stop tracking instead.)'))return;
+ S.trackers=S.trackers.filter(x=>x.id!==id);for(const k in S.tracks)if(S.tracks[k].tid===id)delete S.tracks[k];save();render()}
+function stopTracker(id){const T=S.trackers.find(x=>x.id===id);if(!T||!confirm('Stop tracking these goals for '+nm(stu(T.sid))+'? Past results stay saved and can still be viewed and printed.'))return;
+ T.status='stopped';T.stoppedOn=day();trCont=null;save();render()}
+/* columns shown for a tracker: Mon to Fri of one week (daily), or every week / month so far (weekly, monthly) */
+const wkOf=T=>trWk[T.id]||mon(day()<T.start?T.start:day()>T.end?T.end:day());
+function trCols(T,anchor){const t=day();
+ if(T.freq==='daily')return[0,1,2,3,4].map(i=>{const k=addD(anchor,i);return{key:k,label:['Mon','Tue','Wed','Thu','Fri'][i],sub:fd(k),off:k>t||k<T.start||k>T.end}});
+ const last=T.end<t?T.end:t,a=[];
+ if(T.freq==='weekly')for(let m=mon(T.start);m<=mon(last);m=addD(m,7))a.push({key:m,label:'Week of',sub:fd(m),off:false});
+ else for(let m=T.start.slice(0,7)+'-01';m<=last;m=addM(m,1))a.push({key:m,label:dt(m).toLocaleDateString(undefined,{month:'short',year:'numeric'}),sub:'',off:false});
+ return a}
+function trkGrid(T,cols,mode){
+ const head=h('tr',{},h('th',{},''),cols.map(c=>h('th',{},c.label,h('div',{class:'note'},c.sub)))),
+ rows=(T.criteria||[]).map(c=>h('tr',{},h('td',{class:'cr'},c.label),cols.map(col=>{const v=(S.tracks[T.id+'|'+c.id+'|'+col.key]||{}).v||'';
+  if(mode==='edit')return h('td',{class:'tc'},h('button',{class:'cell',disabled:col.off?'':null,style:cellStyle(T,v),'aria-label':c.label+', '+(col.sub||col.label)+(v?', '+lblOf(T,v):', blank'),onclick:()=>setTrack(T.id,c.id,col.key,nextVal(T,v))},symOf(T,v)));
+  return h('td',{class:'tc'},mode==='done'?symOf(T,v):'')}))),
+ notes=h('tr',{},h('td',{class:'cr'},'Notes'),cols.map(col=>{const e=S.tracks[T.id+'|note|'+col.key]||{};
+  return h('td',{class:'tc'},mode==='edit'?h('input',{class:'cellnote','aria-label':'Note for '+(col.sub||col.label),value:e.note||'',disabled:col.off?'':null,onchange:ev=>setTrack(T.id,'note',col.key,'',ev.target.value.trim())}):(mode==='done'?(e.note||''):''))}));
+ return h('div',{class:'gridwrap'},h('table',{class:mode==='edit'?'tg':'tg pt'},head,rows,notes))}
+const keyEl=T=>h('div',{class:'tkey'},T.type==='check'?[h('span',{},'✓ Done'),h('span',{},'✗ Not yet'),h('span',{},'blank = not recorded')]:(T.levels||[]).map((l,i)=>h('span',{style:'background:'+lvColor(T.levels.length,i)+(i===T.levels.length-1&&T.levels.length>1?';color:#fff':'')},(i+1)+' = '+l.label)));
+function entriesOf(T,c,term){return Object.values(S.tracks).filter(e=>e.tid===T.id&&e.cid===c.id&&e.v!==''&&(!term||e.term===term)).sort((a,b)=>a.date.localeCompare(b.date))}
+function critSummary(T,c,term){const es=entriesOf(T,c,term);if(!es.length)return 'No results yet.';
+ if(T.type==='check'){const y=es.filter(e=>e.v==='y').length;return '✓ '+y+' · ✗ '+(es.length-y)+' · '+Math.round(y*100/es.length)+'% completed ('+es.length+' recorded)'}
+ const cnt={};es.forEach(e=>{const l=lblOf(T,e.v);cnt[l]=(cnt[l]||0)+1});const last=es[es.length-1];
+ return 'Most recent: '+lblOf(T,last.v)+' ('+fd(last.date)+'). '+(T.levels||[]).map(l=>cnt[l.label]?l.label+' '+cnt[l.label]:null).filter(Boolean).join(' · ')}
+function trackerCard(T,full){const st=trState(T),wk=wkOf(T),cols=trCols(T,wk),last=mon(T.end<day()?T.end:day()),tags=[T.category,FREQ[T.freq],rangeText(T)].filter(Boolean).join(' · ');
+ const nav=T.freq==='daily'?h('div',{class:'row noprint',style:'align-items:center;flex-wrap:wrap;margin:8px 0'},
+  h('button',{class:'btn sm',disabled:wk<=mon(T.start)?'':null,onclick:()=>{trWk[T.id]=addD(wk,-7);render()}},'‹ Previous week'),h('strong',{},'Week of '+fd(wk)),
+  h('button',{class:'btn sm',disabled:wk>=last?'':null,onclick:()=>{trWk[T.id]=addD(wk,7);render()}},'Next week ›'),h('button',{class:'btn sm',onclick:()=>{delete trWk[T.id];render()}},'This week')):null;
+ const banner=st==='stopped'?h('div',{class:'ai noprint',style:'background:#EEF1F3'},h('p',{style:'margin:8px 0'},'Stopped tracking'+(T.stoppedOn?' on '+fd(T.stoppedOn):'')+'. Results are saved.'),h('button',{class:'btn',onclick:()=>{trCont=T.id;render()}},'Start tracking again'))
+  :(st==='ended'||st==='ending')?h('div',{class:'ai noprint',style:'background:#FBEBCF'},h('p',{style:'margin:8px 0'},st==='ended'?'This tracking period ended on '+fd(T.end)+'.':'This tracking period ends on '+fd(T.end)+'.'),
+   h('div',{class:'row',style:'flex-wrap:wrap'},h('button',{class:'btn',onclick:()=>stopTracker(T.id)},'Stop tracking these goals'),h('button',{class:'btn pri',onclick:()=>{trCont=T.id;render()}},'Continue tracking'))):null;
+ return h('div',{class:'card'},h('div',{class:'row',style:'justify-content:space-between;align-items:center;flex-wrap:wrap'},
+   h('h3',{style:'margin:0'},T.name),
+   full?h('span',{class:'noprint'},h('button',{class:'btn sm',onclick:()=>{prDlg={ids:[T.id],mode:'blank'};render()}},'Print'),' ',h('button',{class:'btn sm',onclick:()=>{trForm={id:T.id};render()}},'Edit'),' ',h('button',{class:'btn sm',style:'color:var(--rec)',onclick:()=>delTracker(T.id)},'Delete')):null),
+  h('p',{class:'note',style:'margin:2px 0 6px'},tags),T.goal?h('p',{style:'margin:0 0 6px'},'Goal: '+T.goal):null,
+  banner,trCont===T.id?contForm(T):null,nav,keyEl(T),
+  cols.length?trkGrid(T,cols,'edit'):h('p',{class:'note'},T.start>day()?'Tracking starts on '+fd(T.start)+'.':'Nothing to record yet.'),
+  h('p',{class:'note',style:'margin:4px 0 0'},'Tap a box to record a result. Tap again to change it, and again to clear it.'),
+  h('details',{style:'margin-top:8px'},h('summary',{},'Summary'),(T.criteria||[]).map(c=>h('p',{style:'margin:6px 0'},h('strong',{},c.label+': '),critSummary(T,c)))))}
+function rangeFields(init,startToo){let name=init.rng||'Term 1';
+ const s0=h('input',{type:'date',value:init.start||day()}),e0=h('input',{type:'date',value:init.end||''}),info=h('p',{class:'note'},''),
+ dates=h('div',{class:'row',style:'flex-wrap:wrap'},startToo?h('label',{class:'note'},'Starts ',s0):null,h('label',{class:'note'},'Ends ',e0));
+ const sync=()=>{dates.style.display=name==='Choose dates'?'flex':'none';const r=fixRange(name,s0.value,e0.value);info.textContent=name==='Choose dates'?'':fd(r[0])+' to '+fd(r[1])};
+ const sel=osel('Track for',RANGES.map(x=>[x,x]),name,v=>{name=v;sync()});sync();
+ return{el:h('div',{},sel,info,dates),get:()=>{const r=fixRange(name,s0.value,e0.value);return{rng:name,start:r[0],end:r[1]}}}}
+function contForm(T){const next=T.rng==='Progress'?'Term 1':T.rng==='Term 1'?'Term 2':'Choose dates',rf=rangeFields({rng:next,end:T.end},false);
+ return h('div',{class:'card noprint',style:'background:var(--accbg)'},h('h3',{style:'margin-top:0'},'Keep tracking “'+T.name+'”'),h('p',{class:'note'},'Same goals, same results history. Choose how long to keep tracking.'),rf.el,
+  h('div',{class:'row',style:'margin-top:10px'},h('button',{class:'btn pri',onclick:()=>{const r=rf.get();if(!r.end||r.end<day())return toast('Choose an end date that is today or later.');
+   T.rng=r.rng;T.end=r.end;T.status='active';delete T.stoppedOn;trCont=null;save();render()}},'Keep tracking'),h('button',{class:'btn',onclick:()=>{trCont=null;render()}},'Cancel')))}
+function trackerForm(sid){const T=trForm.id?S.trackers.find(x=>x.id===trForm.id):null,
+ nameI=h('input',{placeholder:'Tracker name, for example “Communication goals”','aria-label':'Tracker name',value:T?T.name:''}),
+ cat=osel('Category',['Behaviour','Communication goal','Social-emotional','Work habits','Other'].map(x=>[x,x]),T?T.category:'Communication goal',()=>{}),
+ freq=osel('How often',[['daily','Daily (Mon to Fri)'],['weekly','Weekly'],['monthly','Monthly']],T?T.freq:'daily',()=>{}),
+ goal=h('input',{placeholder:'Goal (optional)','aria-label':'Goal',value:T?T.goal||'':''}),
+ crTa=h('textarea',{'aria-label':'Things to track',placeholder:'One per line, for example:\nUses full sentences\nShares an idea with a partner',style:'min-height:90px'},(T?T.criteria.map(c=>c.label):[]).join('\n')),
+ ta=h('textarea',{'aria-label':'Rubric levels',style:'min-height:110px'},(T&&T.type==='rubric'?T.levels.map(l=>l.label):PRESETS['Rubric (4 levels)']).join('\n')),
+ preset=osel('Preset',[['','Start from a preset…']].concat(Object.keys(PRESETS).map(k=>[k,k])),'',v=>{if(PRESETS[v])ta.value=PRESETS[v].join('\n')}),
+ box=h('div',{style:'margin-top:8px;display:'+((T?T.type:'check')==='rubric'?'block':'none')},h('p',{class:'note'},'One level per line, lowest to highest (2 to 6 levels). Rename them to match your own rubric.'),preset,ta),
+ type=osel('Scale',[['check','✓ / ✗ checkmarks'],['rubric','Rubric with my own levels']],T?T.type:'check',v=>{box.style.display=v==='rubric'?'block':'none'}),
+ rf=rangeFields(T?{rng:T.rng,start:T.start,end:T.end}:{rng:S.term==='Progress'||S.term==='Term 1'||S.term==='Term 2'?S.term:'Term 1'},true);
+ if(T)freq.disabled=true;
+ const done=()=>{const name=nameI.value.trim();if(!name)return toast('Give the tracker a name.');
+  const lines=crTa.value.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,10);if(!lines.length)return toast('Add at least one thing to track.');
+  let levels;if(type.value==='rubric'){levels=ta.value.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,6).map(label=>({label}));if(levels.length<2)return toast('A rubric needs at least 2 levels.')}
+  const r=rf.get();let start=r.start,end=r.end;
+  if(T&&r.rng===T.rng&&r.rng!=='Choose dates'){start=T.start;end=T.end}
+  if(!start||!end||end<start)return toast('Choose a start date and an end date, with the end after the start.');
+  if(!T&&end<day())return toast('That period has already passed. Choose another range or your own dates.');
+  const criteria=lines.map((label,i)=>({id:T&&T.criteria[i]?T.criteria[i].id:uid(),label}));
+  const f={name,category:cat.value,goal:goal.value.trim(),type:type.value,levels,criteria,rng:r.rng,start,end};
+  if(T){Object.assign(T,f);const ids=new Set(criteria.map(c=>c.id));for(const k in S.tracks){const e=S.tracks[k];if(e.tid===T.id&&e.cid!=='note'&&!ids.has(e.cid))delete S.tracks[k]}}
+  else S.trackers.push(Object.assign({id:uid(),sid,freq:freq.value,status:'active',created:day()},f));
+  trForm=null;save();render()};
+ return h('div',{class:'card'},h('h2',{},T?'Edit tracker':'Make a tracker for '+nm(stu(sid))),
+  h('div',{style:'margin-bottom:8px'},nameI),h('div',{class:'row',style:'flex-wrap:wrap;margin-bottom:8px'},cat,freq,type),h('div',{style:'margin-bottom:8px'},goal),
+  h('p',{class:'note',style:'margin:0 0 4px'},'What will you track? These become the rows of the tracker.'),crTa,box,
+  h('h3',{},'How long?'),rf.el,T?h('p',{class:'note'},'How often can’t be changed after the tracker is made.'):null,
+  h('div',{class:'row',style:'margin-top:12px'},h('button',{class:'btn pri',onclick:done},'Save tracker'),h('button',{class:'btn',onclick:()=>{trForm=null;render()}},'Cancel')))}
+/* printing: blank sheets to fill in by hand, or completed results */
+function printBlock(T,mode,n){const t=day();let tables=[];
+ if(T.freq==='daily'){const weeks=[];if(mode==='blank'){const w0=wkOf(T);for(let i=0;i<(n||1);i++)weeks.push(addD(w0,7*i))}else for(let m=mon(T.start);m<=mon(T.end<t?T.end:t);m=addD(m,7))weeks.push(m);
+  tables=weeks.map(m=>h('div',{style:'margin-top:10px;break-inside:avoid'},h('strong',{},'Week of '+fd(m)),trkGrid(T,trCols(T,m).map(c=>Object.assign({},c,{off:false})),mode)))}
+ else{let cols=trCols(T,null);
+  if(mode==='blank'){cols=[];const k=n||(T.freq==='weekly'?8:6),base=t<T.start?T.start:t;let m=T.freq==='weekly'?mon(base):base.slice(0,7)+'-01';
+   for(let i=0;i<k;i++){cols.push(T.freq==='weekly'?{key:m,label:'Week of',sub:fd(m)}:{key:m,label:dt(m).toLocaleDateString(undefined,{month:'short',year:'numeric'}),sub:''});m=T.freq==='weekly'?addD(m,7):addM(m,1)}}
+  tables=[trkGrid(T,cols,mode)]}
+ return h('div',{class:'pblock'},h('h2',{style:'margin:0'},nm(stu(T.sid))+' — '+T.name),h('p',{style:'margin:2px 0'},[T.category,FREQ[T.freq],rangeText(T)].filter(Boolean).join(' · ')),
+  T.goal?h('p',{style:'margin:2px 0'},'Goal: '+T.goal):null,keyEl(T),tables,mode==='done'?null:h('div',{style:'border:1px solid #333;height:60px;margin-top:12px;padding:4px'},'Comments:'),h('p',{style:'font-size:12px;margin:4px 0'},'Printed '+fd(t)))}
+function doPrint(list,mode,n){if(!list.length)return toast('No trackers to print.');
+ $('#printArea').replaceChildren(...list.map(T=>printBlock(T,mode,n)));document.body.classList.add('pr');prDlg=null;
+ setTimeout(()=>{print();setTimeout(()=>document.body.classList.remove('pr'),1500)},80)}
+if(window.addEventListener)window.addEventListener('afterprint',()=>document.body.classList.remove('pr'));
+function printDlg(){const d=prDlg,list=S.trackers.filter(t=>d.ids.includes(t.id)),num=h('input',{type:'number',min:1,max:40,value:'',style:'width:80px','aria-label':'How many'});
+ return h('div',{class:'card noprint',style:'background:var(--accbg)'},h('h3',{style:'margin-top:0'},'Print '+(list.length===1?list[0].name:list.length+' trackers')),
+  h('div',{class:'row',style:'flex-wrap:wrap;align-items:center'},osel('Print type',[['blank','Blank, to fill in by hand'],['done','Completed results']],d.mode,v=>{d.mode=v;render()}),
+   d.mode==='blank'?h('label',{class:'note'},'Weeks or months to include (optional) ',num):null),
+  h('div',{class:'row',style:'margin-top:10px'},h('button',{class:'btn pri',onclick:()=>doPrint(list,d.mode,+num.value||0)},'Print'),h('button',{class:'btn',onclick:()=>{prDlg=null;render()}},'Cancel')))}
+function vTrackers(m){
+ if(!S.roster.length)return m.append(empty('Add your class list in Settings first.'));
+ if(trSel&&!stu(trSel))trSel='';
+ m.append(h('div',{class:'card'},h('h2',{},'Trackers'),
+  h('div',{class:'row',style:'flex-wrap:wrap;align-items:center'},
+   osel('Student',[['','All students']].concat(S.roster.map(s=>[s.id,nm(s)])),trSel,v=>{trSel=v;trForm=null;prDlg=null;render()}),
+   h('button',{class:'btn pri',onclick:()=>{if(!trSel)return toast('Choose a student first.');trForm={};prDlg=null;render()}},'Make a tracker'),
+   h('button',{class:'btn',onclick:()=>{const ids=S.trackers.filter(t=>(!trSel||t.sid===trSel)&&t.status!=='stopped').map(t=>t.id);if(!ids.length)return toast('No active trackers to print.');prDlg={ids,mode:'blank'};trForm=null;render()}},trSel?'Print this student’s trackers':'Print all trackers'))));
+ if(trForm){const T=trForm.id&&S.trackers.find(x=>x.id===trForm.id),sid=T?T.sid:trSel;if(sid)m.append(trackerForm(sid))}
+ if(prDlg)m.append(printDlg());
+ const stus=S.roster.filter(s=>(!trSel||s.id===trSel)&&S.trackers.some(t=>t.sid===s.id));
+ if(!stus.length)return m.append(empty(trSel?'No trackers for this student yet. Press Make a tracker.':'No trackers yet. Choose a student and press Make a tracker.'));
+ stus.forEach(s=>{const all=S.trackers.filter(t=>t.sid===s.id),act=all.filter(t=>t.status!=='stopped'),old=all.filter(t=>t.status==='stopped');
+  m.append(h('h2',{style:'margin:16px 0 8px'},nm(s)));act.forEach(t=>m.append(trackerCard(t,true)));
+  if(old.length)m.append(h('details',{class:'card'},h('summary',{},'Stopped trackers ('+old.length+')'),old.map(t=>trackerCard(t,true))))})}
+function trackerPanel(sid){const ts=S.trackers.filter(t=>t.sid===sid&&t.status!=='stopped');
+ if(!ts.length)return h('div',{class:'card noprint'},h('h2',{},'Trackers'),h('p',{class:'note'},'No active trackers for this student.'),h('button',{class:'btn',onclick:()=>{trSel=sid;trForm={};view='trackers';render()}},'Make a tracker'));
+ return h('div',{},h('h2',{},'Trackers'),ts.map(T=>trackerCard(T,false)))}
+function trackerSummary(sid){const ts=S.trackers.filter(t=>t.sid===sid);if(!ts.length)return null;
+ return h('div',{class:'card'},h('h2',{},'Goals and trackers'),ts.map(T=>h('div',{class:'item',style:'display:block'},h('strong',{},T.name),h('span',{class:'tag'},' · '+[T.category,FREQ[T.freq],T.status==='stopped'?'stopped':rangeText(T)].filter(Boolean).join(' · ')),
+  T.goal?h('div',{class:'note'},'Goal: '+T.goal):null,(T.criteria||[]).map(c=>h('div',{style:'margin-top:4px'},h('strong',{},c.label+': '),critSummary(T,c,pTerm))))))}
+/* ---------- remove a student from one comment ---------- *//* ---------- remove a student from one comment ---------- */
+function whoRow(l){
+ if(!l.students.length)return h('div',{class:'who'},h('button',{class:'btn sm',onclick:()=>{l.students=[...active];save();renderLive()}},'Assign to selected students'));
+ const p=rmP&&rmP.id===l.id?rmP.sid:null;
+ return h('div',{class:'who'},'Filed under: ',
+  l.students.map(i=>h('button',{class:'chipx'+(p===i?' on':''),'aria-label':'Remove '+nm(stu(i))+' from this comment',title:'Tap to remove from this comment',onclick:()=>{rmP={id:l.id,sid:i};renderLive()}},nm(stu(i))+' ×')),
+  l.students.length>1&&!p?h('button',{class:'chipx',onclick:()=>rmStudent(l.id,null)},'Remove all'):null,
+  p?h('span',{class:'rmq'},' Remove '+nm(stu(p))+' from this comment? ',h('button',{class:'btn sm',onclick:()=>rmStudent(l.id,p)},'Yes'),h('button',{class:'btn sm',onclick:()=>{rmP=null;renderLive()}},'No'),
+   l.students.length>1?h('button',{class:'btn sm',onclick:()=>rmStudent(l.id,null)},'Remove all students'):null):null)}
+function rmStudent(id,sid){const l=S.lines.find(x=>x.id===id);if(!l)return;const snap=JSON.stringify(l),aiB=JSON.stringify(S.ai),ids=sid?[sid]:l.students.slice(),who=sid?nm(stu(sid)):'all students';
+ ids.forEach(x=>delete S.ai[x+'|'+l.date+'|'+l.subject]);
+ l.students=sid?l.students.filter(x=>x!==sid):[];if(!sid||l.sp===sid)delete l.sp;rmP=null;save();renderLive();
+ toast('Removed '+who+' from this comment.',()=>{const i=S.lines.findIndex(x=>x.id===id);if(i>=0)S.lines[i]=JSON.parse(snap);S.ai=JSON.parse(aiB);save();renderLive()})}
+
+/* ---------- lesson feedback ---------- */
+const COMMON=new Set(['will','mark','hope','grace','joy','rose','may','bill','art','dawn','faith','summer','sky','april','june','august','ivy','lily','daisy','amber','ruby','pearl','jade','page','chase','drew','rich','pat','jack','grant','miles','frank','guy','case','ray','gene','major','king','lane','sage','river','cash']);
+function scrub(t){const ps=[];S.roster.forEach(r=>{ps.push(r.name.replace(/[.\s]+$/,''));(r.alias||[]).forEach(a=>{if(a.length>1)ps.push(a)});const f=r.name.split(/\s+/)[0];if(f.length>1)ps.push(f)});
+ ps.sort((a,b)=>b.length-a.length).forEach(k=>{
+  if(COMMON.has(k.toLowerCase()))[k,k[0].toUpperCase()+k.slice(1),k.toUpperCase()].filter((v,i,a)=>a.indexOf(v)===i).forEach(v=>{t=t.replace(new RegExp('\\b'+esc(v)+'\\b','g'),'[student]')});
+  else t=t.replace(new RegExp('\\b'+esc(k)+'\\b','gi'),'[student]')});return t}
+function addLessonText(t){const L=S.lessons.find(x=>x.id===lessonSel);if(!L)return;t=scrub(t).trim();if(!t)return;
+ const last=L.seg[L.seg.length-1],now=Date.now();if(last&&now-last.ts<=6000&&last.t.length<400){joinTidy(last,t,'t');last.ts=now}else{const tn=tidyNew(t);L.seg.push({t:tn.text,auto:tn.auto||undefined,ts:now})}save();renderLesson()}
+function renderLesson(){if(view!=='lesson'||!lessonOn)return;const L=S.lessons.find(x=>x.id===lessonSel),b=$('#ltx');if(!L||!b)return;
+ b.replaceChildren(...L.seg.map((s,i)=>h('div',{class:'sg'},h('span',{class:'tag'},(i+1)+'. '),s.t)),...(interim?[h('div',{class:'int'},scrub(interim))]:[]));b.scrollTop=b.scrollHeight}
+function startLesson(){
+ if(!S.grade)return toast('Pick a grade at the top first, so the AI uses the right curriculum.');
+ if(!SR)return toast('Speech recognition needs Chrome or Edge.');
+ if(!listening){startMic();if(!listening)return;lessonMic=true}
+ capturing=false;const L={id:uid(),ts:Date.now(),date:day(),subject:S.subject,strand:S.strand||undefined,term:S.term,grade:S.grade,title:(($('#ltitle')||{}).value||'').trim(),seg:[],ai:null};
+ S.lessons.push(L);lessonSel=L.id;lessonOn=true;lHl=new Set();save();syncBar();render()}
+function lessonFinish(){if(!lessonOn)return;lessonOn=false;const L=S.lessons.find(x=>x.id===lessonSel);
+ if(L&&!L.seg.length){S.lessons=S.lessons.filter(x=>x!==L);lessonSel=null;save()}else if(L){save();if(S.aiOn&&S.sync.url)analyzeLesson(L.id)}
+ syncBar();if(view==='lesson')render()}
+function endLesson(){const m=lessonMic;lessonFinish();lessonMic=false;if(m)stopMic()}
+async function analyzeLesson(id){
+ const L=S.lessons.find(x=>x.id===id);if(!L||!L.seg.length)return;
+ if(!S.aiOn||!S.sync.url)return toast('Turn on the AI helper and connect your sheet in Settings first.');
+ if(!L.grade)return toast('Choose a grade first.');
+ toast('AI is reviewing the lesson. This can take up to a minute.');
+ const payload={task:'lesson',grade:L.grade,subject:L.subject,strand:L.strand||'',term:L.term,segments:L.seg.map((s,i)=>({n:i+1,text:scrub(s.t).slice(0,1200)}))};
+ try{const r=await api('analyze',{payload},120000);if(r.error)return toast('AI: '+r.error);
+  const a=r.result||{},arr=x=>Array.isArray(x)?x.map(String).slice(0,10):[],n=L.seg.length,
+   items=x=>Array.isArray(x)?x.slice(0,8).map(o=>typeof o==='string'?{text:o,segs:[]}:{text:String(o.text||o.topic||''),segs:(Array.isArray(o.segments)?o.segments:[]).map(Number).filter(k=>k>=1&&k<=n)}).filter(o=>o.text):[];
+  L.ai={summary_para:String(a.summary_paragraph||''),summary_dots:arr(a.summary_dots),covered:items(a.covered),strengths:items(a.strengths),next_lesson:items(a.next_lesson),next_time:items(a.next_time),feedback_para:String(a.feedback_paragraph||''),feedback_dots:arr(a.feedback_dots)};
+  save();if(view==='lesson')render();toast('Lesson feedback ready.')}catch(e){toast('Could not reach the AI helper.')}}
+function vLesson(m){
+ const L=S.lessons.find(x=>x.id===lessonSel);
+ m.append(h('div',{class:'card'},h('h2',{},'Lesson Feedback'),
+  h('p',{class:'note'},'Records speech as text only. No audio is saved. Names from your class list are replaced with [student], and nothing about students is sent to the AI.'),
+  h('p',{style:'font-weight:600'},[S.grade?'Grade '+S.grade:'Pick a grade at the top',S.subject,S.strand,S.term].filter(Boolean).join(' · ')),
+  h('div',{class:'row',style:'flex-wrap:wrap;align-items:center'},
+   lessonOn?h('button',{class:'btn rec',onclick:endLesson},'End lesson'):h('button',{class:'btn pri',onclick:startLesson},'Start lesson recording'),
+   lessonOn?null:h('input',{id:'ltitle',placeholder:'Lesson title (optional)','aria-label':'Lesson title'})),
+  lessonOn?h('div',{id:'ltx',class:'tx',style:'margin-top:12px'}):null));
+ if(lessonOn){renderLesson();return}
+ m.append(lessonList());if(L)m.append(lessonReview(L))}
+function lessonList(){
+ const ls=S.lessons.filter(l=>(!lf.sub||l.subject===lf.sub)&&(!lf.strand||l.strand===lf.strand)&&(!lf.term||l.term===lf.term)&&(!lf.grade||l.grade===lf.grade)&&(!lf.from||l.date>=lf.from)&&(!lf.to||l.date<=lf.to)).sort((a,b)=>b.date.localeCompare(a.date)||(b.ts||0)-(a.ts||0));
+ return h('div',{class:'card'},h('h2',{},'Saved lessons'),
+  h('div',{class:'row',style:'flex-wrap:wrap;align-items:center;margin-bottom:10px'},
+   osel('Subject',[['','All subjects']].concat(SUBJ.map(x=>[x,x])),lf.sub,v=>{lf.sub=v;lf.strand='';render()}),
+   osel('Strand',[['','All strands']].concat((CURR[lf.sub]||[]).map(x=>[x,x])),lf.strand,v=>{lf.strand=v;render()}),
+   osel('Period',[['','All periods']].concat(TERMS.map(x=>[x,x])),lf.term,v=>{lf.term=v;render()}),
+   osel('Grade',[['','All grades']].concat([1,2,3,4,5,6,7,8].map(g=>[String(g),'Grade '+g])),lf.grade,v=>{lf.grade=v;render()}),
+   h('label',{class:'note'},'From ',h('input',{type:'date',value:lf.from,onchange:e=>{lf.from=e.target.value;render()}})),
+   h('label',{class:'note'},'To ',h('input',{type:'date',value:lf.to,onchange:e=>{lf.to=e.target.value;render()}}))),
+  ls.length?ls.map(l=>h('button',{class:'it'+(l.id===lessonSel?' on':''),onclick:()=>{lessonSel=l.id;lHl=new Set();render()}},
+   fd(l.date)+' · '+(l.title?l.title+' · ':'')+l.subject+(l.strand?' · '+l.strand:'')+' · Grade '+l.grade+' · '+l.term,h('small',{},l.ai?'AI feedback':'No feedback yet'))):h('p',{class:'note'},'No lessons here yet. Start a lesson recording to add one.'))}
+function remapSegs(L,f){if(!L.ai)return;['covered','strengths','next_lesson','next_time'].forEach(k=>(L.ai[k]||[]).forEach(o=>{o.segs=o.segs.map(f).filter(n=>n!=null)}))}
+function delSeg(L,i){L.seg.splice(i,1);remapSegs(L,n=>n===i+1?null:(n>i+1?n-1:n))}
+function addSeg(L,i,v){v=scrub(v).trim();if(!v)return;L.seg.splice(i+1,0,{t:v,ts:Date.now()});remapSegs(L,n=>n>=i+2?n+1:n)}
+function lessonEdit(L,fn){fn();if(L.ai)L.ai.stale=true;lEdit=null;lHl=new Set();save();render()}
+const addBox=(L,i)=>h('div',{class:'sg'},h('textarea',{id:'segta','aria-label':'Text to add',placeholder:'Type what you said. Names from your class list are replaced with [student].',style:'min-height:80px'}),
+ h('div',{class:'row',style:'margin-top:6px'},h('button',{class:'btn sm pri',onclick:()=>lessonEdit(L,()=>addSeg(L,i,$('#segta').value))},'Add'),h('button',{class:'btn sm',onclick:()=>{lEdit=null;render()}},'Cancel')));
+function segRow(L,i){const x=L.seg[i],mine=lEdit&&lEdit.id===L.id&&lEdit.i===i?lEdit.mode:null;
+ if(mine==='edit')return h('div',{class:'sg'},h('textarea',{id:'segta','aria-label':'Edit transcript text',style:'min-height:80px'},x.t),
+  h('div',{class:'row',style:'margin-top:6px'},h('button',{class:'btn sm pri',onclick:()=>{const v=scrub($('#segta').value).trim();lessonEdit(L,()=>{if(v)L.seg[i].t=v;else delSeg(L,i)})}},'Save'),h('button',{class:'btn sm',onclick:()=>{lEdit=null;render()}},'Cancel')));
+ return h('div',{},h('div',{class:'sg'+(lHl.has(i+1)?' hl':''),id:'seg'+(i+1),dataset:{n:i+1}},h('span',{class:'tag'},(i+1)+'. '),x.t,
+   h('span',{class:'noprint',style:'white-space:nowrap'},' ',
+    h('button',{class:'icon',title:'Fix the words in this part','aria-label':'Edit part '+(i+1),onclick:()=>{lEdit={id:L.id,i,mode:'edit'};render()}},pencil()),
+    h('button',{class:'icon',title:'Add something that was missed after this part','aria-label':'Add text after part '+(i+1),onclick:()=>{lEdit={id:L.id,i,mode:'add'};render()}},plus()),
+    h('button',{class:'icon',title:'Delete this part','aria-label':'Delete part '+(i+1),onclick:()=>{if(confirm('Delete this part of the transcript?'))lessonEdit(L,()=>delSeg(L,i))}},trash()))),
+  mine==='add'?addBox(L,i):null)}
+function lessonReview(L){const a=L.ai,mode=S.lmode||'dots';
+ const hl=segs=>{lHl=new Set(segs);document.querySelectorAll('.sg').forEach(e=>e.classList.toggle('hl',lHl.has(+e.dataset.n)));const e=segs.length&&$('#seg'+segs[0]);if(e&&e.scrollIntoView)e.scrollIntoView({block:'center',behavior:'smooth'})};
+ const fb=(title,items)=>items&&items.length?h('div',{},h('h3',{},title),items.map(o=>h('button',{class:'fb',onclick:()=>hl(o.segs)},o.text,h('span',{class:'tag'},o.segs.length?'  · tap to see where it was said':'  · no matching moment')))):null;
+ const bul=x=>h('ul',{},(x||[]).map(t=>h('li',{},t)));
+ return h('div',{class:'grid'},
+  h('div',{class:'card'},h('h2',{},'Transcript'),
+   h('div',{class:'row noprint',style:'margin-bottom:6px;flex-wrap:wrap'},h('button',{class:'btn sm',onclick:()=>{lEdit={id:L.id,i:-1,mode:'add'};render()}},'+ Add text at start'),h('button',{class:'btn sm',onclick:()=>{lEdit={id:L.id,i:L.seg.length-1,mode:'add'};render()}},'+ Add text at end')),
+   h('p',{class:'note'},'Use the pencil to fix words, the + to add something that wasn’t recorded, and the trash can to remove a part.'),
+   h('div',{class:'tx',style:'max-height:70vh'},lEdit&&lEdit.id===L.id&&lEdit.mode==='add'&&lEdit.i===-1?addBox(L,-1):null,L.seg.map((x,i)=>segRow(L,i)))),
+  h('div',{class:'card'},h('h2',{},(L.title||L.subject)+' · '+fd(L.date)),h('p',{class:'note'},['Grade '+L.grade,L.subject,L.strand,L.term].filter(Boolean).join(' · ')),
+   h('div',{class:'row',style:'flex-wrap:wrap;align-items:center'},
+    h('div',{class:'seg'},[['dots','Dot jots'],['para','Paragraph']].map(([k,l])=>h('button',{class:mode===k?'on':'',onclick:()=>{S.lmode=k;save();render()}},l))),
+    S.aiOn&&S.sync.url?h('button',{class:'btn pri',onclick:()=>analyzeLesson(L.id)},a?'Re-run AI feedback':'Run AI feedback'):null,
+    S.aiOn&&S.sync.url?h('button',{class:'btn',onclick:()=>punctLesson(L)},'Add punctuation (AI)'):null,
+    h('button',{class:'btn',style:'color:var(--rec)',onclick:()=>{if(confirm('Delete this lesson and its feedback?')){S.lessons=S.lessons.filter(x=>x.id!==L.id);lessonSel=null;save();render()}}},'Delete')),
+   a?[a.stale?h('p',{class:'note',style:'color:var(--rec)'},'The transcript was edited after this feedback was written. Run AI feedback again to update it.'):null,h('div',{class:'ai'},h('h3',{},'Lesson summary'),mode==='dots'?bul(a.summary_dots):h('p',{},a.summary_para)),
+    fb('What the AI heard you cover',a.covered),fb('Strengths',a.strengths),fb('Next steps for the next lesson',a.next_lesson),fb('For the next time this lesson is taught',a.next_time),
+    h('div',{class:'ai'},h('h3',{},'Overall feedback'),mode==='dots'?bul(a.feedback_dots):h('p',{},a.feedback_para))]
+   :h('p',{class:'note',style:'margin-top:12px'},'No AI feedback yet. Turn on the AI helper and connect your sheet in Settings, then press Run AI feedback.')))}
+/* ---------- select, combine, attribute ---------- */
+function renderBulk(){const b=$('#bulk');if(!b)return;
+ const td=S.lines.filter(l=>l.date===day());[...checked].forEach(id=>{if(!td.some(l=>l.id===id))checked.delete(id)});
+ const from=id=>td.filter(l=>l.who==='S'&&(l.sp===id||(!l.sp&&l.students.includes(id)))),n=checked.size;
+ const q=osel('Quick select',[['','Select comments…'],['all','All comments today']].concat(S.roster.filter(s=>from(s.id).length).map(s=>[s.id,'All from '+nm(s)])),'',v=>{if(!v)return;checked=new Set(v==='all'?td.map(l=>l.id):from(v).map(l=>l.id));renderLive()});
+ const rows=[h('div',{class:'row',style:'align-items:center;flex-wrap:wrap'},q,n?h('strong',{},n+' selected'):null,n?h('button',{class:'btn sm',onclick:()=>{checked=new Set();document.querySelectorAll('#tx .ck').forEach(e=>{e.checked=false});renderLive()}},'Untick all'):null)];
+ if(n)rows.push(h('div',{class:'bulkp'},
+  h('div',{class:'row',style:'flex-wrap:wrap;align-items:center'},
+   h('button',{class:'btn pri',disabled:n<2?'':null,onclick:combine},'Combine into one comment'),
+   h('button',{class:'btn',style:'color:var(--t)',onclick:()=>setSpeaker('T')},'Teacher said'),
+   osel('Student said by',[['','Student said by…']].concat(S.roster.map(s=>[s.id,nm(s)])),'',v=>v&&setSpeaker('S',v)),
+   osel('Change subject',[['','Change subject to…']].concat(SUBJ.map(x=>[x,x])),'',v=>v&&setSubject(v)),
+   h('button',{class:'btn',style:'color:var(--rec)',onclick:delChecked},'Delete selected'),S.aiOn&&S.sync.url?h('button',{class:'btn',onclick:punctLive},'Add punctuation (AI)'):null),
+  h('p',{class:'note',style:'margin:10px 0 6px'},'File under one student or a group:'),
+  h('div',{class:'chips'},S.roster.map(s=>h('button',{class:'chip'+(bulkTo.has(s.id)?' on':''),'aria-pressed':bulkTo.has(s.id),onclick:()=>{bulkTo.has(s.id)?bulkTo.delete(s.id):bulkTo.add(s.id);renderBulk()}},nm(s)))),
+  h('button',{class:'btn',style:'margin-top:8px',disabled:bulkTo.size?null:'',onclick:fileUnder},'File under selected students')));
+ b.replaceChildren(...rows)}
+function bulk(msg,fn){const sel=S.lines.filter(l=>checked.has(l.id)),keys=new Set(),k=l=>l.students.forEach(x=>keys.add(x+'|'+l.date+'|'+l.subject));
+ sel.forEach(k);const before=JSON.stringify(S.lines),aiB=JSON.stringify(S.ai);fn(sel);
+ S.lines.filter(l=>checked.has(l.id)).forEach(k);keys.forEach(x=>delete S.ai[x]);
+ save();checked=new Set();bulkTo=new Set();renderLive();
+ toast(msg,()=>{S.lines=JSON.parse(before);S.ai=JSON.parse(aiB);save();renderLive()})}
+function combine(){const sel=S.lines.filter(l=>checked.has(l.id));if(sel.length<2)return;
+ if(new Set(sel.map(l=>l.who)).size>1)return toast('Pick comments from one speaker to combine. Teacher and student comments can’t be mixed.');
+ bulk('Combined '+sel.length+' comments into one.',s=>{const f=s[0];
+  f.text=s.map(l=>l.text.trim()).join(' ').replace(/\s+/g,' ');f.students=[...new Set(s.flatMap(l=>l.students))];
+  {const sps=[...new Set(s.map(l=>l.sp).filter(Boolean))];if(sps.length===1)f.sp=sps[0];else delete f.sp}if(s.some(l=>l.manual))f.manual=1;
+  const drop=new Set(s.slice(1).map(l=>l.id));S.lines=S.lines.filter(l=>!drop.has(l.id))})}
+const setSpeaker=(w,sid)=>bulk(w==='T'?'Marked as Teacher.':'Attributed to '+nm(stu(sid))+'.',sel=>sel.forEach(l=>{l.who=w;l.manual=1;if(w==='T')delete l.sp;else{l.sp=sid;if(!l.students.includes(sid))l.students.push(sid)}}));
+const fileUnder=()=>{const ids=[...bulkTo];if(!ids.length)return;bulk('Filed under '+ids.map(i=>nm(stu(i))).join(', ')+'.',sel=>sel.forEach(l=>{l.students=ids.slice();l.manual=1;if(l.sp&&!ids.includes(l.sp))delete l.sp;if(ids.length===1&&l.who==='S')l.sp=ids[0]}))};
+const delChecked=()=>bulk('Deleted '+checked.size+' comments.',sel=>{const d=new Set(sel.map(l=>l.id));S.lines=S.lines.filter(l=>!d.has(l.id))});
+const joinCard=()=>h('div',{class:'card'},h('h2',{},'Pauses'),h('p',{},'When the same speaker keeps talking after a short pause, join it into one comment automatically.'),
+ osel('Join pauses',[['0','Off'],['5','5 seconds'],['8','8 seconds'],['12','12 seconds'],['20','20 seconds']],String(S.joinSec),v=>{S.joinSec=+v;save()}));
+/* ---------- punctuation, corrections and microphone ---------- */
+const QW=/^(what|why|how|when|where|who|which|can|could|do|does|did|is|are|was|were|will|would|should|may|might|have|has)\b/i;
+function fixText(t){(S.fixes||'').split('\n').forEach(l=>{const p=l.split('=');if(p.length<2)return;const a=p[0].trim(),b=p.slice(1).join('=').trim();if(a)t=t.replace(new RegExp('\\b'+esc(a)+'\\b','gi'),b)});
+ if(S.spokenPunct)t=t.replace(/\s*\b(?:period|full stop)\b/gi,'.').replace(/\s*\bcomma\b/gi,',').replace(/\s*\bquestion mark\b/gi,'?').replace(/\s*\bexclamation (?:point|mark)\b/gi,'!').replace(/([.?!,])(?=[A-Za-z])/g,'$1 ');return t}
+const tidyOn=()=>S.tidy!==false;
+function tidyEnd(t){return /[.?!]$/.test(t)?t:t+(QW.test(t.replace(/^.*[.?!]\s+/,''))?'?':'.')}
+function tidyNew(t){if(!tidyOn())return{text:t};let x=t.replace(/\bi\b/g,'I');x=x?x[0].toUpperCase()+x.slice(1):x;const had=/[.?!]$/.test(x);return{text:tidyEnd(x),auto:!had}}
+function joinTidy(o,t,k){if(!tidyOn()){o[k]=(o[k]+' '+t).replace(/\s+/g,' ');return}
+ const base=o.auto?o[k].slice(0,-1):o[k];let x=(base+' '+t).replace(/\s+/g,' ').replace(/\bi\b/g,'I');const had=/[.?!]$/.test(x);o[k]=tidyEnd(x);o.auto=!had}
+/* names are swapped for placeholders before any text goes to the AI, then put back exactly as spoken */
+function maskNames(t){const parts=[],f=[];S.roster.forEach(r=>{f.push(r.name.replace(/[.\s]+$/,''),r.name.split(/\s+/)[0]);(r.alias||[]).forEach(a=>f.push(a))});
+ f.filter(x=>x&&x.length>1).sort((a,b)=>b.length-a.length).forEach(k=>{t=t.replace(new RegExp('\\b'+esc(k)+'\\b','gi'),m=>{parts.push(m);return '[['+(parts.length-1)+']]'})});return{text:t,parts}}
+const unmask=(t,p)=>t.replace(/\[\[(\d+)\]\]/g,(m,n)=>p[+n]!==undefined?p[+n]:m);
+const wkey=t=>t.toLowerCase().replace(/[^\p{L}\p{N}\[\]]+/gu,' ').trim();
+async function punctuate(items){const out={};let batch=[],len=0;
+ const flush=async()=>{if(!batch.length)return;const r=await api('analyze',{payload:{task:'punctuate',items:batch}},90000);if(r.error)throw new Error(r.error);((r.result||{}).items||[]).forEach(o=>{out[String(o.n)]=String(o.text||'')});batch=[];len=0};
+ for(const it of items){if(len+it.text.length>5000)await flush();batch.push(it);len+=it.text.length}await flush();return out}
+async function punctLive(){const sel=S.lines.filter(l=>checked.has(l.id));if(!sel.length)return;
+ if(!S.aiOn||!S.sync.url)return toast('Turn on the AI helper and connect your sheet in Settings first.');
+ toast('Adding punctuation…');const masks={};const items=sel.map(l=>{masks[l.id]=maskNames(l.text);return{n:l.id,text:masks[l.id].text}});
+ try{const out=await punctuate(items),done={};
+  sel.forEach(l=>{const r=out[l.id],m=masks[l.id];if(r&&wkey(r)===wkey(m.text)){const u=unmask(r,m.parts);done[l.id]=u?u[0].toUpperCase()+u.slice(1):u}});
+  const ids=Object.keys(done);if(!ids.length)return toast('The AI could not add punctuation. Nothing was changed.');
+  const before={};S.lines.forEach(l=>{if(done[l.id])before[l.id]=[l.text,l.auto]});
+  S.lines.forEach(l=>{if(done[l.id]){l.text=done[l.id];delete l.auto}});checked=new Set();save();renderLive();
+  toast('Added punctuation to '+ids.length+' comment'+(ids.length>1?'s':'')+'.',()=>{S.lines.forEach(l=>{if(before[l.id]){l.text=before[l.id][0];if(before[l.id][1])l.auto=true}});save();renderLive()})}
+ catch(e){toast('AI: '+(e.message||'could not reach the AI helper.'))}}
+async function punctLesson(L){if(!S.aiOn||!S.sync.url)return toast('Turn on the AI helper and connect your sheet in Settings first.');
+ toast('Adding punctuation. This can take a moment.');
+ try{const out=await punctuate(L.seg.map((x,i)=>({n:String(i+1),text:x.t}))),before=JSON.stringify(L.seg);let n=0;
+  L.seg.forEach((x,i)=>{const r=out[String(i+1)];if(r&&r!==x.t&&wkey(r)===wkey(x.t)){x.t=r;delete x.auto;n++}});
+  if(!n)return toast('Nothing needed changing, or the AI could not add punctuation.');
+  save();render();toast('Punctuation added.',()=>{L.seg=JSON.parse(before);save();render()})}
+ catch(e){toast('AI: '+(e.message||'could not reach the AI helper.'))}}
+async function micTest(bar,msg){if(listening)stopMic();
+ try{const st=await navigator.mediaDevices.getUserMedia({audio:true}),ac=new(window.AudioContext||window.webkitAudioContext)(),an=ac.createAnalyser();an.fftSize=1024;ac.createMediaStreamSource(st).connect(an);
+  const buf=new Uint8Array(an.fftSize),t0=Date.now();let peak=0;msg.textContent='Say a sentence at your normal teaching volume…';
+  const tick=()=>{an.getByteTimeDomainData(buf);let m=0;for(const v of buf)m=Math.max(m,Math.abs(v-128));const lvl=Math.min(100,Math.round(m/128*150));peak=Math.max(peak,lvl);bar.style.width=lvl+'%';
+   if(Date.now()-t0<8000)requestAnimationFrame(tick);else{st.getTracks().forEach(x=>x.stop());ac.close();
+    msg.textContent=peak<15?'Very quiet. Move closer, raise the microphone volume in your device’s sound settings, or try a different microphone.':peak<35?'A little quiet. Try moving closer or raising the input volume.':peak>92?'Very loud and it may be distorting. Lower the input volume or move back a little.':'Good level.'}};tick()}
+ catch(e){msg.textContent='Could not open the microphone. Allow it in the address bar.'}}
+function speechCard(){const bar=h('div',{style:'height:100%;width:0;background:var(--acc)'}),msg=h('p',{class:'note',role:'status'},'');
+ return h('div',{class:'card'},h('h2',{},'Speech and microphone'),
+  osel('Speech language',[['en-CA','English (Canada)'],['en-US','English (United States)'],['en-GB','English (United Kingdom)'],['fr-CA','French (Canada)'],['','Browser default']],S.lang==null?'en-CA':S.lang,v=>{S.lang=v;save();toast('Applies the next time you start listening.')}),
+  h('label',{style:'display:block;margin-top:10px'},h('input',{type:'checkbox',checked:S.tidy!==false?'':null,onchange:e=>{S.tidy=e.target.checked;save()}}),' Tidy as I speak: capital letters and full stops or question marks'),
+  h('label',{style:'display:block;margin-top:4px'},h('input',{type:'checkbox',checked:S.spokenPunct?'':null,onchange:e=>{S.spokenPunct=e.target.checked;save()}}),' Spoken punctuation: say “comma”, “period” or “question mark” (these words are also changed when used in a sentence)'),
+  h('h3',{},'Fix common mistakes'),h('p',{class:'note'},'One per line: what it wrote = what you said. For example: tent frames = ten frames'),
+  h('textarea',{'aria-label':'Fix common mistakes',style:'min-height:90px',onchange:e=>{S.fixes=e.target.value;save()}},S.fixes||''),
+  h('h3',{},'Microphone check'),h('div',{style:'height:14px;background:#E6ECEF;border-radius:6px;overflow:hidden;margin:6px 0'},bar),
+  h('button',{class:'btn',onclick:()=>micTest(bar,msg)},'Test my microphone (8 seconds)'),msg,
+  h('p',{class:'note'},'The app can’t make the microphone more sensitive. Raise the input volume in your device’s sound settings, use a headset or clip-on microphone close to your mouth, and choose the right microphone in the browser’s microphone setting (the icon in the address bar).'))}
+/* ---------- change the subject of comments ---------- */
+const setSubject=v=>bulk('Moved '+checked.size+' comment'+(checked.size>1?'s':'')+' to '+v+'.',sel=>sel.forEach(l=>{l.subject=v;l.strand=undefined}));
+function lblEditor(ed){const ls=S.lines.filter(l=>ed.ids.includes(l.id)),f=ls[0];if(!f)return null;
+ let sub=f.subject,strand=f.strand||'',term=f.term||S.term;const strandBox=h('span',{});
+ const mkStrand=()=>strandBox.replaceChildren(osel('Strand',[['','Any strand']].concat((CURR[sub]||[]).map(x=>[x,x])),strand,v=>{strand=v}));
+ const subSel=osel('Subject',(SUBJ.includes(sub)?SUBJ:[sub].concat(SUBJ)).map(x=>[x,x]),sub,v=>{sub=v;strand='';mkStrand()});mkStrand();
+ return h('div',{class:'bulkp noprint'},h('p',{class:'note',style:'margin:0 0 6px'},ed.ids.length>1?'Change the subject for these '+ed.ids.length+' comments. If a comment is shared with a group, it changes for the whole group.':'Change the subject for this comment. If it is shared with a group, it changes for the whole group.'),
+  h('div',{class:'row',style:'flex-wrap:wrap;align-items:center'},subSel,strandBox,osel('Period',TERMS.map(x=>[x,x]),term,v=>{term=v}),
+   h('button',{class:'btn pri sm',onclick:()=>relabel(ed,sub,strand,term)},'Save'),h('button',{class:'btn sm',onclick:()=>{edLbl=null;render()}},'Cancel')))}
+function relabel(ed,sub,strand,term){const ids=new Set(ed.ids),sel=S.lines.filter(l=>ids.has(l.id));if(!sel.length)return;
+ const before=JSON.stringify(S.lines),aiB=JSON.stringify(S.ai),mkB=JSON.stringify(S.marks),keys=new Set(),oldSub=sel[0].subject,date=sel[0].date;
+ sel.forEach(l=>l.students.forEach(x=>keys.add(x+'|'+l.date+'|'+l.subject)));
+ sel.forEach(l=>{l.subject=sub;l.strand=strand||undefined;l.term=term});
+ sel.forEach(l=>l.students.forEach(x=>keys.add(x+'|'+l.date+'|'+l.subject)));keys.forEach(k=>delete S.ai[k]);
+ if(ed.anchor[0]==='g'&&oldSub!==sub){const ok=ed.sid+'|'+date+'|'+oldSub,nk=ed.sid+'|'+date+'|'+sub;if(S.marks[ok]&&!S.marks[nk]){S.marks[nk]=S.marks[ok];delete S.marks[ok]}}
+ edLbl=null;save();render();
+ toast('Moved to '+sub+'.',()=>{S.lines=JSON.parse(before);S.ai=JSON.parse(aiB);S.marks=JSON.parse(mkB);save();render()})}
+/* ---------- delete lines ---------- */
+const spk=l=>l.who==='T'?'Teacher':(l.sp&&stu(l.sp)?nm(stu(l.sp)):'Student');
+const pencil=()=>sv('svg',{viewBox:'0 0 24 24',width:16,height:16,fill:'none',stroke:'currentColor','stroke-width':2,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true'},sv('path',{d:'M12 20h9'}),sv('path',{d:'M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z'}));
+const plus=()=>sv('svg',{viewBox:'0 0 24 24',width:16,height:16,fill:'none',stroke:'currentColor','stroke-width':2,'stroke-linecap':'round','aria-hidden':'true'},sv('path',{d:'M12 5v14M5 12h14'}));
+const trash=()=>sv('svg',{viewBox:'0 0 24 24',width:18,height:18,fill:'none',stroke:'currentColor','stroke-width':2,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true'},sv('path',{d:'M3 6h18'}),sv('path',{d:'M8 6V4h8v2'}),sv('path',{d:'M6 6l1 14h10l1-14'}),sv('path',{d:'M10 11v6M14 11v6'}));
+function delLine(id,sid){const i=S.lines.findIndex(l=>l.id===id);if(i<0)return;const l=S.lines[i],snap=JSON.stringify(l),shared=sid&&l.students.length>1,
+ keys=(shared?[sid]:l.students).map(x=>x+'|'+l.date+'|'+l.subject),savedAi={};
+ keys.forEach(k=>{if(S.ai[k]){savedAi[k]=S.ai[k];delete S.ai[k]}});
+ if(shared)l.students=l.students.filter(x=>x!==sid);else S.lines.splice(i,1);
+ const redraw=()=>view==='live'?renderLive():render();save();redraw();
+ toast(shared?'Removed from '+nm(stu(sid))+'’s notes. It stays for the rest of the group.':'Deleted.',()=>{const o=JSON.parse(snap),j=S.lines.findIndex(x=>x.id===id);
+  if(j>=0)S.lines[j]=o;else S.lines.splice(Math.min(i,S.lines.length),0,o);Object.assign(S.ai,savedAi);save();redraw()})}
+/* ---------- student IDs: STU-26-001, STU-26-002, ... ---------- */
+const ID_RE=/^STU-\d\d-\d{3}$/;
+function newId(){S.idYear=S.idYear||String(schoolYear()).slice(2);
+ let n=S.idLast||0;S.roster.forEach(r=>{const m=/^STU-\d\d-(\d{3})$/.exec(r.id||'');if(m)n=Math.max(n,+m[1])});
+ S.idLast=n+1;return 'STU-'+S.idYear+'-'+String(n+1).padStart(3,'0')}
+function migrateIds(){const map={};S.roster.forEach(r=>{if(!ID_RE.test(r.id)){const o=r.id;r.id=newId();map[o]=r.id}});
+ if(!Object.keys(map).length)return false;const m=i=>map[i]||i,rk=(o,f)=>{const n={};for(const k in o)n[f(k)]=o[k];return n},mk=k=>{const p=k.split('|'),i=p[0]==='P'?1:0;p[i]=m(p[i]);return p.join('|')};
+ S.lines.forEach(l=>l.students=l.students.map(m));S.trackers.forEach(t=>{t.sid=m(t.sid)});S.marks=rk(S.marks,mk);S.ai=rk(S.ai,mk);S.items=rk(S.items,m);S.codes=rk(S.codes,m);
+ active=active.map(m);if(selS)selS=m(selS);return true}
+/* ---------- school year ---------- */
+const schoolYear=()=>{const d=new Date();return d.getMonth()>=6?d.getFullYear():d.getFullYear()-1};
+const yearLabel=y=>y+'–'+String(y+1).slice(2);
+const newYearDue=()=>S.idYear&&S.roster.length&&String(schoolYear()).slice(2)!==S.idYear;
+function startNewYear(){const y=schoolYear();
+ if(!confirm('Start the '+yearLabel(y)+' school year?\n\nThis downloads a copy of this year\'s notes, then clears all students and notes from this device and restarts student numbers at 001.\n\nIt also disconnects from the current Google Sheet so last year\'s sheet is not changed. Tip: in Google Sheets, use File > Make a copy to keep it.'))return;
+ exportCsv();
+ const keep={aiOn:S.aiOn,subject:S.subject,mode:S.mode,hide:S.hide,lessons:S.lessons,lmode:S.lmode};
+ S=Object.assign(fresh(),keep);active=[];selS=null;save();setSync('');view='settings';render();
+ toast('New year started. Add your class list, then connect a new sheet.')}
+const yearBanner=()=>h('div',{class:'card noprint',style:'border-left:5px solid var(--s)'},
+ h('p',{style:'margin:0 0 10px'},'A new school year has started ('+yearLabel(schoolYear())+'). Start fresh so student numbers return to 001.'),
+ h('button',{class:'btn pri sm',onclick:startNewYear},'Start new school year'));
+function yearCard(){const yy=S.idYear||String(schoolYear()).slice(2),next='STU-'+yy+'-'+String((S.idLast||0)+1).padStart(3,'0');
+ return h('div',{class:'card'},h('h2',{},'School year'),
+  h('p',{},'Student numbers for this class look like STU-'+yy+'-001. The next new student gets '+next+'.'),
+  h('button',{class:'btn',onclick:startNewYear},'Start new school year'),
+  h('p',{class:'note'},'Downloads a copy of this year\'s notes, clears the app, and restarts numbering at 001. It does not touch your Google Sheet.'))}
+{const a=migrateIds(),b=normSubjects(),c=migrateCodes(),d=migrateTrackers();delete S.ai.__codes;persist();if(a||b||c||d)queueSync()}
+render();
+if(S.sync&&S.sync.url)syncNow();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.sync&&S.sync.url)syncNow()});
+setInterval(async()=>{if(document.hidden||syncBusy||!S.sync||!S.sync.url)return;try{const r=await api('rev');if(r&&r.rev!==undefined&&r.rev!==lastRev)syncNow()}catch(e){}},30000);
+</script></body></html>
