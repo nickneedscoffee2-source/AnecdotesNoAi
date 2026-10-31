@@ -1,6 +1,5 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<link rel="icon" type="image/png" href="writefavicon.png">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://script.google.com https://script.googleusercontent.com; img-src data:">
@@ -305,10 +304,9 @@ function vMap(m){
 
 /* ---------- settings ---------- */
 function vSettings(m){
- const ta=h('textarea',{'aria-label':'Class list',placeholder:'One student per line. Use a first name and last initial, like Emily R.'},S.roster.map(s=>s.name+(s.alias&&s.alias.length?' = '+s.alias.join(', '):'')).join('\n'));
- m.append(h('div',{class:'card'},h('h2',{},'Class list'),ta,h('p',{class:'note'},'One name per line. If two students share a first name, add a last initial to each. If the microphone often mishears a name, add the way it writes it after an equals sign, for example: Emily R. = Emilie, Amelie'),
-  h('button',{class:'btn pri',onclick:()=>{const rows=[],seen=new Set();ta.value.split('\n').map(x=>x.trim()).filter(Boolean).forEach(l=>{const p=l.split('='),name=p[0].trim();if(!name||seen.has(name))return;seen.add(name);rows.push({name,alias:(p[1]||'').split(',').map(x=>x.trim()).filter(Boolean)})});
-   const old=S.roster;S.roster=rows.slice(0,60).map(o=>{const r=old.find(x=>x.name===o.name)||{id:'',name:o.name};r.alias=o.alias.length?o.alias:undefined;return r});S.roster.forEach(r=>{if(!r.id)r.id=newId()});save();toast('Class list saved');render()}},'Save class list')),
+ const ta=h('textarea',{'aria-label':'Class list',style:'min-height:280px',placeholder:'One student per line, for example:\nSTU-26-001 | Emily R.\nSTU-26-002 | Sam K.\nOr just the names, and the app numbers them in order.'},S.roster.map(s=>s.id+' | '+s.name+(s.alias&&s.alias.length?' = '+s.alias.join(', '):'')).join('\n'));
+ m.append(h('div',{class:'card'},h('h2',{},'Class list'),ta,h('p',{class:'note'},'One student per line, written as ID | Name. Type your own IDs and they are used exactly as you write them and never change by themselves. Leave the ID off a new name and the next free number is given (a list of only names is numbered in order from 001). To change an ID, edit it here. If two students share a first name, add a last initial. If the microphone mishears a name, add how it writes it after an equals sign, for example: STU-26-001 | Emily R. = Emilie, Amelie'),
+  h('button',{class:'btn pri',onclick:()=>saveRoster(ta.value)},'Save class list')),
  syncCard(),yearCard(),joinCard(),speechCard(),
  h('div',{class:'card'},h('h2',{},'Privacy'),
   h('p',{},'Notes stay in this browser unless you connect your Google Sheet. If the AI helper is on, student names are swapped for codes before any text leaves your browser. No audio is recorded or saved, only text, and text is only kept while capturing is on.'),
@@ -330,6 +328,7 @@ async function api(action,extra,ms){const c=new AbortController(),t=setTimeout((
  try{const r=await fetch(S.sync.url,{method:'POST',body:JSON.stringify(Object.assign({action,key:S.sync.key},extra)),signal:c.signal});return await r.json()}finally{clearTimeout(t)}}
 const setSync=t=>{$('#sync').textContent=t;const m=$('#syncmsg');if(m)m.textContent=t};
 let syncBusy=false,syncAgain=false,lastRev=null;
+const APP_VERSION='2026-10-20 build 6';
 const clock=()=>new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 function queueSync(){if(syncing||!S.sync||!S.sync.url)return;if(syncBusy){syncAgain=true;return}clearTimeout(syncT);syncT=setTimeout(syncNow,4000)}
 const wire=()=>({trackers:S.trackers,tracks:S.tracks,roster:S.roster,lines:S.lines,lessons:S.lessons,items:S.items,marks:S.marks,ai:S.ai,tomb:S.tomb,idYear:S.idYear,idLast:S.idLast});
@@ -358,12 +357,15 @@ async function syncNow(){
  try{for(let i=0;i<3;i++){
    const r=await api('pull');
    if(r.error){setSync(r.error==='Wrong passcode'?'Wrong passcode. Check it in Settings.':'Sheet error: '+r.error);return}
+   if(r.rev===undefined||!r.version){setSync('Syncing is paused to protect your notes: the Google Sheet script is out of date. Paste the newest Code.gs into Apps Script, then Deploy → Manage deployments → pencil → New version → Deploy.');return}
+   S.scriptVer=r.version;S.sheetInfo=r.sheet?r.sheet+' (…'+r.tail+')':'';
    const m=mergeState(wire(),r.state||{});applyMerged(m);lastRev=r.rev;
-   if(!m.needPush){setSync('Up to date '+clock());return}
+   const sum=()=>' · '+S.roster.length+' students, '+S.lines.length+' comments, '+S.lessons.length+' lessons · sheet “'+(r.sheet||'?')+'” (…'+(r.tail||'?')+')';
+   if(!m.needPush){setSync('Up to date '+clock()+sum());return}
    const w=await api('push',{state:wire(),baseRev:r.rev});
    if(w.conflict)continue;
    if(w.error){setSync('Sheet error: '+w.error);return}
-   lastRev=w.rev;setSync('Synced '+clock());return}
+   lastRev=w.rev;setSync('Synced '+clock()+sum());return}
   setSync('The other device was saving. Trying again shortly.');syncAgain=true}
  catch(e){setSync(netMsg(e))}
  finally{syncBusy=false;if(syncAgain){syncAgain=false;queueSync()}}}
@@ -400,15 +402,19 @@ async function connect(url,key){S.sync={url:url.trim(),key:key.trim()};syncing=t
  setSync('Connecting… the first try can take 10 to 20 seconds.');
  try{const r=await api('ping');
   if(r.error&&r.error!=='Unknown action')return setSync(r.error==='Wrong passcode'?'Wrong passcode. Tick Show passcode and check it matches the PASSCODE property exactly.':'Sheet error: '+r.error);
-  setSync('Connected. Syncing…');await syncNow()}catch(e){setSync(netMsg(e))}}
+  if(r.version!==undefined&&r.version<4)return setSync('Connected, but the Google Sheet script is out of date. Paste the newest Code.gs and make a new deployment version.');
+  if(r.sheet)setSync('Connected to sheet “'+r.sheet+'” (…'+r.tail+'). Syncing…');else setSync('Connected. Syncing…');await syncNow()}catch(e){setSync(netMsg(e))}}
+async function copySetupLink(){if(!S.sync.url||!S.sync.key)return toast('Save and connect first.');
+ const link=location.origin+location.pathname+'#connect='+btoa(encodeURIComponent(JSON.stringify({u:S.sync.url,k:S.sync.key})));
+ try{await navigator.clipboard.writeText(link);toast('Link copied. Open it on your other device. Keep it private: it contains your passcode.')}catch(e){prompt('Copy this link and open it on your other device:',link)}}
 function syncCard(){const u=h('input',{placeholder:'Web app URL (ends in /exec)','aria-label':'Web app URL',value:S.sync.url}),k=h('input',{type:'password',placeholder:'Passcode you made up','aria-label':'Passcode',value:S.sync.key});
  return h('div',{class:'card'},h('h2',{},'Google Sheet and AI helper'),h('div',{class:'row',style:'flex-wrap:wrap'},u,k),
   h('label',{style:'display:block;margin:10px 0 0'},h('input',{type:'checkbox',onchange:e=>{k.type=e.target.checked?'text':'password'}}),' Show passcode'),
   h('label',{style:'display:block;margin:6px 0 10px'},h('input',{type:'checkbox',checked:S.aiOn?'':null,onchange:e=>{S.aiOn=e.target.checked;save()}}),' AI helper: sort notes into marks and comments'),
   h('div',{class:'row',style:'flex-wrap:wrap'},h('button',{class:'btn pri',onclick:()=>connect(u.value,k.value)},'Save and connect'),
-   h('button',{class:'btn',onclick:syncNow},'Sync now'),h('button',{class:'btn',onclick:()=>confirm('Replace everything on this device with what is in the sheet?')&&loadReplace()},'Replace this device with the sheet'),h('button',{class:'btn',onclick:()=>confirm('Replace everything in the sheet with what is on this device? Use this only if the sheet has the wrong data.')&&forcePush()},'Replace the sheet with this device')),
+   h('button',{class:'btn',onclick:syncNow},'Sync now'),h('button',{class:'btn',onclick:copySetupLink},'Copy setup link for my other device'),h('button',{class:'btn',onclick:()=>confirm('Replace everything on this device with what is in the sheet?')&&loadReplace()},'Replace this device with the sheet'),h('button',{class:'btn',onclick:()=>confirm('Replace everything in the sheet with what is on this device? Use this only if the sheet has the wrong data.')&&forcePush()},'Replace the sheet with this device')),
   h('p',{id:'syncmsg',class:'note',role:'status'},''),
-  h('p',{class:'note'},'Only the web app URL and the passcode go here. The Gemini key stays in the Apps Script, never in this page. Phones and computers stay in step automatically: each device merges its changes with the sheet a few seconds after you make them, and again about every 30 seconds and whenever you return to the app. Please don\'t edit the app\'s tabs by hand in the sheet.'))}
+  h('p',{class:'note'},'Only the web app URL and the passcode go here. The Gemini key stays in the Apps Script, never in this page. Phones and computers stay in step automatically: each device merges its changes with the sheet a few seconds after you make them, and again about every 30 seconds and whenever you return to the app. Please don\'t edit the app\'s tabs by hand in the sheet. Both devices must use the same web app URL. App version: '+APP_VERSION+(S.scriptVer?' · Sheet script version: '+S.scriptVer:'')+(S.sheetInfo?' · Sheet: '+S.sheetInfo:'')))}
 /* ---------- trackers ---------- */
 /* A tracker has criteria (rows) and is recorded daily (Mon to Fri columns), weekly (a column per week) or monthly (a column per month). */
 const PRESETS={'Rubric (4 levels)':['Not yet','Developing','Proficient','Extending'],'How often':['Never','Sometimes','Often','Always'],'How much help':['Needs support','Some support','Independent'],'Met or not met':['Not met','Met']};
@@ -460,6 +466,7 @@ function critSummary(T,c,term){const es=entriesOf(T,c,term);if(!es.length)return
  if(T.type==='check'){const y=es.filter(e=>e.v==='y').length;return '✓ '+y+' · ✗ '+(es.length-y)+' · '+Math.round(y*100/es.length)+'% completed ('+es.length+' recorded)'}
  const cnt={};es.forEach(e=>{const l=lblOf(T,e.v);cnt[l]=(cnt[l]||0)+1});const last=es[es.length-1];
  return 'Most recent: '+lblOf(T,last.v)+' ('+fd(last.date)+'). '+(T.levels||[]).map(l=>cnt[l.label]?l.label+' '+cnt[l.label]:null).filter(Boolean).join(' · ')}
+function addGoal(tid,label){const T=S.trackers.find(x=>x.id===tid);label=(label||'').trim();if(!T||!label)return;if(T.criteria.length>=10)return toast('Up to 10 goals per tracker.');T.criteria.push({id:uid(),label});save();render()}
 function trackerCard(T,full){const st=trState(T),wk=wkOf(T),cols=trCols(T,wk),last=mon(T.end<day()?T.end:day()),tags=[T.category,FREQ[T.freq],rangeText(T)].filter(Boolean).join(' · ');
  const nav=T.freq==='daily'?h('div',{class:'row noprint',style:'align-items:center;flex-wrap:wrap;margin:8px 0'},
   h('button',{class:'btn sm',disabled:wk<=mon(T.start)?'':null,onclick:()=>{trWk[T.id]=addD(wk,-7);render()}},'‹ Previous week'),h('strong',{},'Week of '+fd(wk)),
@@ -473,6 +480,7 @@ function trackerCard(T,full){const st=trState(T),wk=wkOf(T),cols=trCols(T,wk),la
   h('p',{class:'note',style:'margin:2px 0 6px'},tags),T.goal?h('p',{style:'margin:0 0 6px'},'Goal: '+T.goal):null,
   banner,trCont===T.id?contForm(T):null,nav,keyEl(T),
   cols.length?trkGrid(T,cols,'edit'):h('p',{class:'note'},T.start>day()?'Tracking starts on '+fd(T.start)+'.':'Nothing to record yet.'),
+  full?(()=>{const gi=h('input',{placeholder:'Add another goal to this tracker','aria-label':'New goal',onkeydown:e=>{if(e.key==='Enter')addGoal(T.id,e.target.value)}});return h('div',{class:'row noprint',style:'margin-top:8px'},gi,h('button',{class:'btn sm',onclick:()=>addGoal(T.id,gi.value)},'+ Add goal'))})():null,
   h('p',{class:'note',style:'margin:4px 0 0'},'Tap a box to record a result. Tap again to change it, and again to clear it.'),
   h('details',{style:'margin-top:8px'},h('summary',{},'Summary'),(T.criteria||[]).map(c=>h('p',{style:'margin:6px 0'},h('strong',{},c.label+': '),critSummary(T,c)))))}
 function rangeFields(init,startToo){let name=init.rng||'Term 1';
@@ -490,28 +498,32 @@ function trackerForm(sid){const T=trForm.id?S.trackers.find(x=>x.id===trForm.id)
  cat=osel('Category',['Behaviour','Communication goal','Social-emotional','Work habits','Other'].map(x=>[x,x]),T?T.category:'Communication goal',()=>{}),
  freq=osel('How often',[['daily','Daily (Mon to Fri)'],['weekly','Weekly'],['monthly','Monthly']],T?T.freq:'daily',()=>{}),
  goal=h('input',{placeholder:'Goal (optional)','aria-label':'Goal',value:T?T.goal||'':''}),
- crTa=h('textarea',{'aria-label':'Things to track',placeholder:'One per line, for example:\nUses full sentences\nShares an idea with a partner',style:'min-height:90px'},(T?T.criteria.map(c=>c.label):[]).join('\n')),
+ goalRows=[],goalsBox=h('div',{}),
  ta=h('textarea',{'aria-label':'Rubric levels',style:'min-height:110px'},(T&&T.type==='rubric'?T.levels.map(l=>l.label):PRESETS['Rubric (4 levels)']).join('\n')),
  preset=osel('Preset',[['','Start from a preset…']].concat(Object.keys(PRESETS).map(k=>[k,k])),'',v=>{if(PRESETS[v])ta.value=PRESETS[v].join('\n')}),
  box=h('div',{style:'margin-top:8px;display:'+((T?T.type:'check')==='rubric'?'block':'none')},h('p',{class:'note'},'One level per line, lowest to highest (2 to 6 levels). Rename them to match your own rubric.'),preset,ta),
  type=osel('Scale',[['check','✓ / ✗ checkmarks'],['rubric','Rubric with my own levels']],T?T.type:'check',v=>{box.style.display=v==='rubric'?'block':'none'}),
  rf=rangeFields(T?{rng:T.rng,start:T.start,end:T.end}:{rng:S.term==='Progress'||S.term==='Term 1'||S.term==='Term 2'?S.term:'Term 1'},true);
  if(T)freq.disabled=true;
+ const addGoalRow=(label,id)=>{const row={id:id||uid()};row.input=h('input',{placeholder:'Goal '+(goalRows.length+1)+', for example “Uses full sentences”','aria-label':'Goal '+(goalRows.length+1),value:label||'',onkeydown:e=>{if(e.key==='Enter'){e.preventDefault();more()}}});
+  row.el=h('div',{class:'row',style:'margin-bottom:6px;align-items:center'},row.input,h('button',{class:'btn sm','aria-label':'Remove this goal',title:'Remove this goal',onclick:()=>{goalRows.splice(goalRows.indexOf(row),1);row.el.remove()}},'×'));goalRows.push(row);goalsBox.append(row.el);return row};
+ const more=()=>{if(goalRows.length>=10)return toast('Up to 10 goals per tracker.');const r=addGoalRow('');if(r.input.focus)r.input.focus()};
+ (T?T.criteria:[{},{},{}]).forEach(c=>addGoalRow(c.label||'',c.id));
  const done=()=>{const name=nameI.value.trim();if(!name)return toast('Give the tracker a name.');
-  const lines=crTa.value.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,10);if(!lines.length)return toast('Add at least one thing to track.');
+  const crit=goalRows.map(r=>({id:r.id,label:r.input.value.trim()})).filter(c=>c.label).slice(0,10);if(!crit.length)return toast('Add at least one goal to track.');
   let levels;if(type.value==='rubric'){levels=ta.value.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,6).map(label=>({label}));if(levels.length<2)return toast('A rubric needs at least 2 levels.')}
   const r=rf.get();let start=r.start,end=r.end;
   if(T&&r.rng===T.rng&&r.rng!=='Choose dates'){start=T.start;end=T.end}
   if(!start||!end||end<start)return toast('Choose a start date and an end date, with the end after the start.');
   if(!T&&end<day())return toast('That period has already passed. Choose another range or your own dates.');
-  const criteria=lines.map((label,i)=>({id:T&&T.criteria[i]?T.criteria[i].id:uid(),label}));
+  const criteria=crit;
   const f={name,category:cat.value,goal:goal.value.trim(),type:type.value,levels,criteria,rng:r.rng,start,end};
   if(T){Object.assign(T,f);const ids=new Set(criteria.map(c=>c.id));for(const k in S.tracks){const e=S.tracks[k];if(e.tid===T.id&&e.cid!=='note'&&!ids.has(e.cid))delete S.tracks[k]}}
   else S.trackers.push(Object.assign({id:uid(),sid,freq:freq.value,status:'active',created:day()},f));
   trForm=null;save();render()};
  return h('div',{class:'card'},h('h2',{},T?'Edit tracker':'Make a tracker for '+nm(stu(sid))),
   h('div',{style:'margin-bottom:8px'},nameI),h('div',{class:'row',style:'flex-wrap:wrap;margin-bottom:8px'},cat,freq,type),h('div',{style:'margin-bottom:8px'},goal),
-  h('p',{class:'note',style:'margin:0 0 4px'},'What will you track? These become the rows of the tracker.'),crTa,box,
+  h('p',{class:'note',style:'margin:0 0 4px'},'Goals to track for this student. Each goal becomes its own row, one after another.'),goalsBox,h('button',{class:'btn sm',onclick:more},'+ Add another goal'),box,
   h('h3',{},'How long?'),rf.el,T?h('p',{class:'note'},'How often can’t be changed after the tracker is made.'):null,
   h('div',{class:'row',style:'margin-top:12px'},h('button',{class:'btn pri',onclick:done},'Save tracker'),h('button',{class:'btn',onclick:()=>{trForm=null;render()}},'Cancel')))}
 /* printing: blank sheets to fill in by hand, or completed results */
@@ -774,10 +786,32 @@ const ID_RE=/^STU-\d\d-\d{3}$/;
 function newId(){S.idYear=S.idYear||String(schoolYear()).slice(2);
  let n=S.idLast||0;S.roster.forEach(r=>{const m=/^STU-\d\d-(\d{3})$/.exec(r.id||'');if(m)n=Math.max(n,+m[1])});
  S.idLast=n+1;return 'STU-'+S.idYear+'-'+String(n+1).padStart(3,'0')}
-function migrateIds(){const map={};S.roster.forEach(r=>{if(!ID_RE.test(r.id)){const o=r.id;r.id=newId();map[o]=r.id}});
- if(!Object.keys(map).length)return false;const m=i=>map[i]||i,rk=(o,f)=>{const n={};for(const k in o)n[f(k)]=o[k];return n},mk=k=>{const p=k.split('|'),i=p[0]==='P'?1:0;p[i]=m(p[i]);return p.join('|')};
- S.lines.forEach(l=>l.students=l.students.map(m));S.trackers.forEach(t=>{t.sid=m(t.sid)});S.marks=rk(S.marks,mk);S.ai=rk(S.ai,mk);S.items=rk(S.items,m);S.codes=rk(S.codes,m);
- active=active.map(m);if(selS)selS=m(selS);return true}
+function remapIds(map){if(!Object.keys(map).length)return false;const m=i=>map[i]||i,rk=(o,f)=>{const n={};for(const k in o)n[f(k)]=o[k];return n},mk=k=>{const p=k.split('|'),i=p[0]==='P'?1:0;p[i]=m(p[i]);return p.join('|')};
+ S.roster.forEach(r=>{r.id=m(r.id)});S.lines.forEach(l=>{l.students=l.students.map(m);if(l.sp)l.sp=m(l.sp)});S.trackers.forEach(t=>{t.sid=m(t.sid)});
+ S.marks=rk(S.marks,mk);S.items=rk(S.items,m);S.codes=rk(S.codes,m);
+ const ai={};for(const k in S.ai){const p=k.split('|'),i=p[0]==='P'?1:0;if(map[p[i]])continue;ai[k]=S.ai[k]}S.ai=ai;
+ active=active.map(m);if(selS)selS=m(selS);if(trSel)trSel=m(trSel);return true}
+function migrateIds(){const map={};S.roster.forEach(r=>{if(!ID_RE.test(r.id))map[r.id]=newId()});return remapIds(map)}
+/* class list: "STU-26-001 | Emily R. = Emilie, Amelie". IDs you type are used exactly and never change by themselves. */
+function parseRoster(text){const rows=[],errs=[];
+ text.split('\n').map(x=>x.trim()).filter(Boolean).forEach((l,i)=>{let id='';const m=/^(STU-\d{2}-\d{3})\s*[|,:\t]?\s*(.*)$/i.exec(l);
+  if(m){id=m[1].toUpperCase();l=m[2]}else if(/^[A-Za-z]{2,5}-\d{1,4}-\d{1,4}\b/.test(l)){errs.push('Line '+(i+1)+': IDs look like STU-26-001 (three digits at the end).');return}
+  const p=l.split('='),name=p[0].trim();if(!name){errs.push('Line '+(i+1)+': add the student’s name after the ID.');return}
+  rows.push({id,name,alias:(p[1]||'').split(',').map(x=>x.trim()).filter(Boolean)})});return{rows,errs}}
+function saveRoster(text){const{rows,errs}=parseRoster(text);if(errs.length)return toast(errs[0]);
+ const given=rows.filter(r=>r.id).map(r=>r.id);if(new Set(given).size!==given.length)return toast('Two students have the same ID. Each ID can be used once.');
+ const names=rows.map(r=>r.name);if(new Set(names).size!==names.length)return toast('Two students have the same name. Add a last initial to tell them apart.');
+ const old=S.roster,match=rows.map(()=>null),used=new Set();
+ rows.forEach((r,i)=>{if(r.id){const o=old.find(x=>x.id===r.id);if(o){match[i]=o;used.add(o.id)}}});
+ rows.forEach((r,i)=>{if(!match[i]){const o=old.find(x=>x.name===r.name&&!used.has(x.id));if(o){match[i]=o;used.add(o.id)}}});
+ const fin=rows.map((r,i)=>r.id||(match[i]?match[i].id:''));
+ const have=fin.filter(Boolean);if(new Set(have).size!==have.length)return toast('That ID is already used by another student. Give each student their own ID.');
+ const suffix=id=>{const m=/-(\d{3})$/.exec(id||'');return m?+m[1]:0};
+ let n=Math.max(S.idLast||0,...have.map(suffix),0);S.idYear=S.idYear||(have[0]&&/^STU-(\d\d)-/.exec(have[0])?/^STU-(\d\d)-/.exec(have[0])[1]:String(schoolYear()).slice(2));
+ fin.forEach((id,i)=>{if(!id){n++;fin[i]='STU-'+S.idYear+'-'+String(n).padStart(3,'0')}});
+ const map={};match.forEach((o,i)=>{if(o&&o.id!==fin[i])map[o.id]=fin[i]});remapIds(map);
+ S.roster=rows.map((r,i)=>{const rec=match[i]||{id:fin[i],name:r.name};rec.id=fin[i];rec.name=r.name;rec.alias=r.alias.length?r.alias:undefined;return rec});
+ S.idLast=Math.max(S.idLast||0,...S.roster.map(r=>suffix(r.id)));save();toast('Class list saved');render()}
 /* ---------- school year ---------- */
 const schoolYear=()=>{const d=new Date();return d.getMonth()>=6?d.getFullYear():d.getFullYear()-1};
 const yearLabel=y=>y+'–'+String(y+1).slice(2);
@@ -796,6 +830,7 @@ function yearCard(){const yy=S.idYear||String(schoolYear()).slice(2),next='STU-'
   h('p',{},'Student numbers for this class look like STU-'+yy+'-001. The next new student gets '+next+'.'),
   h('button',{class:'btn',onclick:startNewYear},'Start new school year'),
   h('p',{class:'note'},'Downloads a copy of this year\'s notes, clears the app, and restarts numbering at 001. It does not touch your Google Sheet.'))}
+if(typeof location!=='undefined'&&location.hash&&location.hash.indexOf('#connect=')===0){try{const o=JSON.parse(decodeURIComponent(atob(location.hash.slice(9))));if(o.u&&o.k)S.sync={url:o.u,key:o.k}}catch(e){}try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
 {const a=migrateIds(),b=normSubjects(),c=migrateCodes(),d=migrateTrackers();delete S.ai.__codes;persist();if(a||b||c||d)queueSync()}
 render();
 if(S.sync&&S.sync.url)syncNow();
